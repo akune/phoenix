@@ -19,15 +19,58 @@ public class GwtTestRsaKeyPairGenerator extends GWTTestCase {
 		return "de.kune.phoenix.mainjunit";
 	}
 
+	private class TestCallback<K, V> implements Callback<K, V> {
+
+		private boolean finishTestOnSuccess;
+
+		public TestCallback() {
+			this(true);
+		}
+
+		public TestCallback(boolean finishTestOnSuccess) {
+			this.finishTestOnSuccess = finishTestOnSuccess;
+		}
+
+		protected void handleSuccess(K result) {
+		}
+
+		protected void handleFailure(V reason) {
+			fail(reason == null ? "unknown"
+					: reason instanceof Throwable ? ((Throwable) reason).getMessage() : reason.toString());
+		}
+
+		@Override
+		public final void onFailure(V reason) {
+			try {
+				handleFailure(reason);
+			} catch (Throwable e) {
+				reportUncaughtException(e);
+			}
+		}
+
+		@Override
+		public final void onSuccess(K result) {
+			try {
+				handleSuccess(result);
+				if (finishTestOnSuccess) {
+					finishTest();
+				}
+			} catch (Throwable e) {
+				reportUncaughtException(e);
+			}
+		}
+
+	}
+
 	public void testEncryptPublicDecryptPrivateWithGivenKeyPair() {
 		delayTestFinish(120000);
 		RsaKeyPairGenerator generator = new RsaKeyPairGenerator();
 		generator.createAsync(
 				"cbVz3B4xbxx2E3l4l0LeCnjD7GkFXyshtxxhtnN5hF8sUVjmdD0zYAQgO7ca2pN4pazU5R7xx1EGr80jZBW5WZH0yA",
 				"4wxbdmWP5JYXXdxxfq3fqHa8BunOHCGib0m5dwRkar1J8xajgNeVTVUnZdPzpuAX6xxPUVlbcXLRBuhpHWxaE2bPIs5ZI0tQxxsaRIgukrXEpmw4gPCVmzNSkwfopBm8xx2gCZ3pRDnMEvfXhxbJTQ5xxgxxyfkQ",
-				new Callback<RsaKeyPair, Exception>() {
+				new TestCallback<RsaKeyPair, Exception>() {
 					@Override
-					public void onSuccess(RsaKeyPair result) {
+					public void handleSuccess(RsaKeyPair result) {
 						try {
 							result.setMessageFormat(MessageFormat.BitPadding);
 							assertNotNull(result);
@@ -41,17 +84,12 @@ public class GwtTestRsaKeyPairGenerator extends GWTTestCase {
 								byte[] decryptedBytes = result.decrypt(KeyType.PRIVATE, encrypted);
 								GWT.log("decrypted bytes: " + decryptedBytes);
 								assertEquals(plainText, new String(decryptedBytes, "UTF-8"));
-								finishTest();
 							} catch (UnsupportedEncodingException e) {
 								fail("UTF-8 not supported");
 							}
 						} catch (Throwable e) {
 							reportUncaughtException(e);
 						}
-					}
-
-					@Override
-					public void onFailure(Exception reason) {
 					}
 				});
 	}
@@ -60,9 +98,9 @@ public class GwtTestRsaKeyPairGenerator extends GWTTestCase {
 		delayTestFinish(120000);
 		RsaKeyPairGenerator generator = new RsaKeyPairGenerator();
 		generator.generateKeyPairAsync(KeyStrength.WEAK, PublicExponent.SMALLEST,
-				new Callback<RsaKeyPair, Exception>() {
+				new TestCallback<RsaKeyPair, Exception>() {
 					@Override
-					public void onSuccess(RsaKeyPair result) {
+					public void handleSuccess(RsaKeyPair result) {
 						try {
 							assertNotNull(result);
 							try {
@@ -75,7 +113,6 @@ public class GwtTestRsaKeyPairGenerator extends GWTTestCase {
 								byte[] decryptedBytes = result.decrypt(KeyType.PRIVATE, encrypted);
 								GWT.log("decrypted bytes: " + Arrays.toString(decryptedBytes));
 								assertEquals(plainText, new String(decryptedBytes, "UTF-8"));
-								finishTest();
 							} catch (UnsupportedEncodingException e) {
 								fail("UTF-8 not supported");
 							}
@@ -83,72 +120,23 @@ public class GwtTestRsaKeyPairGenerator extends GWTTestCase {
 							reportUncaughtException(e);
 						}
 					}
-
-					@Override
-					public void onFailure(Exception reason) {
-						try {
-							fail(reason.getMessage());
-						} catch (Throwable e) {
-							reportUncaughtException(e);
-						}
-					}
-				}, new Callback<Integer, Void>() {
-					@Override
-					public void onSuccess(Integer result) {
-					}
-
-					@Override
-					public void onFailure(Void reason) {
-						try {
-							fail();
-						} catch (Throwable e) {
-							reportUncaughtException(e);
-						}
-					}
-				});
+				}, new TestCallback<Integer, Void>(false));
 	}
 
 	public void testGenerateRsaKey() {
 		delayTestFinish(120000);
 		RsaKeyPairGenerator generator = new RsaKeyPairGenerator();
 		generator.generateKeyPairAsync(KeyStrength.WEAK, PublicExponent.SMALLEST,
-				new Callback<RsaKeyPair, Exception>() {
+				new TestCallback<RsaKeyPair, Exception>() {
 					@Override
-					public void onSuccess(RsaKeyPair result) {
-						try {
-							assertSame("invalid public key encrypt max size", 47,
-									result.getEncryptMaxSize(KeyType.PUBLIC));
-							assertSame("invalid private key encrypt max size", 47,
-									result.getEncryptMaxSize(KeyType.PRIVATE));
-							assertNotNull(result);
-							finishTest();
-						} catch (Throwable e) {
-							reportUncaughtException(e);
-						}
+					public void handleSuccess(RsaKeyPair result) {
+						assertSame("invalid public key encrypt max size", 47, result.getEncryptMaxSize(KeyType.PUBLIC));
+						assertSame("invalid private key encrypt max size", 47,
+								result.getEncryptMaxSize(KeyType.PRIVATE));
+						assertNotNull(result);
+						finishTest();
 					}
-
-					@Override
-					public void onFailure(Exception reason) {
-						try {
-							fail(reason.getMessage());
-						} catch (Throwable e) {
-							reportUncaughtException(e);
-						}
-					}
-				}, new Callback<Integer, Void>() {
-					@Override
-					public void onSuccess(Integer result) {
-					}
-
-					@Override
-					public void onFailure(Void reason) {
-						try {
-							fail();
-						} catch (Throwable e) {
-							reportUncaughtException(e);
-						}
-					}
-				});
+				}, new TestCallback<Integer, Void>(false));
 	}
 
 }
