@@ -6,10 +6,10 @@ import java.util.Arrays;
 import com.google.gwt.core.shared.GWT;
 
 import de.kune.phoenix.shared.RsaKeyPair.KeyType;
-import de.kune.phoenix.shared.RsaKeyPairGenerator.KeyStrength;
-import de.kune.phoenix.shared.RsaKeyPairGenerator.PublicExponent;
+import de.kune.phoenix.shared.RsaKeyPairFactory.KeyStrength;
+import de.kune.phoenix.shared.RsaKeyPairFactory.PublicExponent;
 
-public class GwtTestRsaKeyPairGenerator extends AsyncGwtTestBase {
+public class GwtTestRsaKeyPairFactory extends AsyncGwtTestBase {
 
 	@Override
 	public String getModuleName() {
@@ -18,7 +18,7 @@ public class GwtTestRsaKeyPairGenerator extends AsyncGwtTestBase {
 
 	public void testEncryptPublicDecryptPrivateWithGeneratedKey() {
 		delayTestFinish(120000);
-		RsaKeyPairGenerator generator = new RsaKeyPairGenerator();
+		RsaKeyPairFactory generator = new RsaKeyPairFactory();
 		generator.generateKeyPairAsync(KeyStrength.WEAK, PublicExponent.SMALLEST,
 				new TestCallback<RsaKeyPair, Exception>() {
 					@Override
@@ -45,9 +45,9 @@ public class GwtTestRsaKeyPairGenerator extends AsyncGwtTestBase {
 				}, new TestCallback<Integer, Void>(false));
 	}
 
-	public void testGenerateRsaKey() {
+	public void testGenerateWeakRsaKey() {
 		delayTestFinish(120000);
-		RsaKeyPairGenerator generator = new RsaKeyPairGenerator();
+		RsaKeyPairFactory generator = new RsaKeyPairFactory();
 		generator.generateKeyPairAsync(KeyStrength.WEAK, PublicExponent.SMALLEST,
 				new TestCallback<RsaKeyPair, Exception>() {
 					@Override
@@ -61,4 +61,20 @@ public class GwtTestRsaKeyPairGenerator extends AsyncGwtTestBase {
 				}, new TestCallback<Integer, Void>(false));
 	}
 
+	public void testGenerateMediumRsaKey() {
+		delayTestFinish(120000);
+		RsaKeyPairFactory generator = new RsaKeyPairFactory();
+		generator.generateKeyPairAsync(KeyStrength.MEDIUM, PublicExponent.SMALLEST,
+				new TestCallback<RsaKeyPair, Exception>() {
+			@Override
+			public void handleSuccess(RsaKeyPair result) {
+				assertSame("invalid public key encrypt max size", 111, result.getEncryptMaxSize(KeyType.PUBLIC));
+				assertSame("invalid private key encrypt max size", 111,
+						result.getEncryptMaxSize(KeyType.PRIVATE));
+				assertNotNull(result);
+				finishTest();
+			}
+		}, new TestCallback<Integer, Void>(false));
+	}
+	
 }

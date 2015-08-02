@@ -82,6 +82,7 @@
           <mode>selenium</mode>
           <selenium>127.0.0.1:4444/firefox</selenium>
 <!--           <productionMode>false</productionMode> -->
+          <testTimeOut>300</testTimeOut>
           <webMode>true</webMode>
         </configuration>
       </plugin>

@@ -13,10 +13,10 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 import de.kune.phoenix.shared.RsaKeyPair;
-import de.kune.phoenix.shared.RsaKeyPairGenerator;
+import de.kune.phoenix.shared.RsaKeyPairFactory;
 import de.kune.phoenix.shared.RsaKeyPair.MessageFormat;
-import de.kune.phoenix.shared.RsaKeyPairGenerator.KeyStrength;
-import de.kune.phoenix.shared.RsaKeyPairGenerator.PublicExponent;
+import de.kune.phoenix.shared.RsaKeyPairFactory.KeyStrength;
+import de.kune.phoenix.shared.RsaKeyPairFactory.PublicExponent;
 
 public class Main implements EntryPoint {
 
@@ -26,7 +26,7 @@ public class Main implements EntryPoint {
 		panel.add(welcomeLabel);
 		RootPanel.get().add(panel);
 		GWT.log("loading main module and scripts");
-		final RsaKeyPairGenerator generator = new RsaKeyPairGenerator();
+		final RsaKeyPairFactory generator = new RsaKeyPairFactory();
 		GWT.log("waiting, state=" + generator.getState());
 		generator.init(new Callback<Void, Exception>() {
 

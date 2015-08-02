@@ -11,7 +11,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayNumber;
 import com.google.gwt.core.client.ScriptInjector;
 
-public class RsaKeyPairGenerator {
+public class RsaKeyPairFactory {
 
 	private State state = State.UNINITIALIZED;
 

@@ -20,7 +20,7 @@ public class GwtTestRsaKeyPair extends AsyncGwtTestBase {
 
 	public void testEncryptPublicDecryptPrivateWithGivenKeyPairBitPadding() {
 		delayTestFinish(120000);
-		RsaKeyPairGenerator generator = new RsaKeyPairGenerator();
+		RsaKeyPairFactory generator = new RsaKeyPairFactory();
 		generator.createAsync(PUBLIC_KEY, PRIVATE_KEY, new TestCallback<RsaKeyPair, Exception>() {
 			@Override
 			public void handleSuccess(RsaKeyPair result) {
@@ -49,7 +49,7 @@ public class GwtTestRsaKeyPair extends AsyncGwtTestBase {
 
 	public void testEncryptPublicDecryptPrivateWithGivenKeyPairSoaepPadding() {
 		delayTestFinish(120000);
-		RsaKeyPairGenerator generator = new RsaKeyPairGenerator();
+		RsaKeyPairFactory generator = new RsaKeyPairFactory();
 		generator.createAsync(PUBLIC_KEY, PRIVATE_KEY, new TestCallback<RsaKeyPair, Exception>() {
 			@Override
 			public void handleSuccess(RsaKeyPair result) {
@@ -78,7 +78,7 @@ public class GwtTestRsaKeyPair extends AsyncGwtTestBase {
 	
 	public void testEncryptPrivateDecryptPublicWithGivenKeyPairSoaepPadding() {
 		delayTestFinish(120000);
-		RsaKeyPairGenerator generator = new RsaKeyPairGenerator();
+		RsaKeyPairFactory generator = new RsaKeyPairFactory();
 		generator.createAsync(PUBLIC_KEY, PRIVATE_KEY, new TestCallback<RsaKeyPair, Exception>() {
 			@Override
 			public void handleSuccess(RsaKeyPair result) {
@@ -107,7 +107,7 @@ public class GwtTestRsaKeyPair extends AsyncGwtTestBase {
 	
 	public void testEncryptPrivateDecryptPublicWithGivenKeyPairBitPadding() {
 		delayTestFinish(120000);
-		RsaKeyPairGenerator generator = new RsaKeyPairGenerator();
+		RsaKeyPairFactory generator = new RsaKeyPairFactory();
 		generator.createAsync(PUBLIC_KEY, PRIVATE_KEY, new TestCallback<RsaKeyPair, Exception>() {
 			@Override
 			public void handleSuccess(RsaKeyPair result) {
