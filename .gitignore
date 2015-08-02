@@ -1,0 +1,9 @@
+target
+.settings
+.project
+.classpath
+.extract
+*.log
+.springBeans
+gwt-unitCache
+war
