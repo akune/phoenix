@@ -245,12 +245,9 @@ public class RsaKeyPairFactory {
 
 	}
 
-	private static final List<String> SCRIPT_FILES = Arrays.asList(new String[] { "{moduleBaseUrl}/tools/packages.js","{moduleBaseUrl}/tools/packages.js",
-			"{moduleBaseUrl}/tools/isarray.js", "{moduleBaseUrl}/tools/binary.js", "{moduleBaseUrl}/tools/elapse.js", "{moduleBaseUrl}/tools/trace.async.js",
-			"{moduleBaseUrl}/BigInteger.init1.js", "{moduleBaseUrl}/RSA.init1.js", "{moduleBaseUrl}/SecureRandom.js", "{moduleBaseUrl}/BigInteger.init2.js",
-			"{moduleBaseUrl}/RSA.init2.js", "{moduleBaseUrl}/nonstructured/nonstructured.js", "{moduleBaseUrl}/BigInteger.init3.js", "{moduleBaseUrl}/RSA.init3.js",
-			"{moduleBaseUrl}/Cipher.js", "{moduleBaseUrl}/SOAEP.js", "{moduleBaseUrl}/RSAKeyFormat.js", "{moduleBaseUrl}/BitPadding.js", "{moduleBaseUrl}/RSAMessageFormat.js",
-			"{moduleBaseUrl}/RSAMessageFormatSOAEP.js", "{moduleBaseUrl}/RSAMessageFormatBitPadding.js" });
+	private static final List<String> SCRIPT_FILES = Arrays.asList(new String[] {
+			"{moduleBaseUrl}/all.js"
+			});
 
 	private static boolean scriptsLoaded;
 

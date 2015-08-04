@@ -16,6 +16,7 @@
     <maven.compiler.source>1.6</maven.compiler.source>
     <maven.compiler.target>1.6</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <compiler.output.directory>${project.build.directory}/${project.build.finalName}/WEB-INF/classes</compiler.output.directory>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -58,8 +59,52 @@
     </dependency>
   </dependencies>
   <build>
-    <outputDirectory>${project.build.directory}/${project.build.finalName}/WEB-INF/classes</outputDirectory>
+    <outputDirectory>${compiler.output.directory}</outputDirectory>
     <plugins>
+      <plugin>
+        <groupId>net.alchim31.maven</groupId>
+        <artifactId>yuicompressor-maven-plugin</artifactId>
+        <version>1.1</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>compress</goal>
+            </goals>
+            <phase>generate-resources</phase>
+          </execution>
+        </executions>
+        <configuration>
+          <aggregations>
+            <aggregation>
+              <insertNewLine>true</insertNewLine>
+              <output>${compiler.output.directory}/de/kune/phoenix/public/all.js</output>
+              <inputDir>src/main/javascript</inputDir>
+              <includes>
+                <include>titaniumcore/tools/packages.js</include>
+                <include>titaniumcore/tools/isarray.js</include>
+                <include>titaniumcore/tools/binary.js</include>
+                <include>titaniumcore/tools/elapse.js</include>
+                <include>titaniumcore/tools/trace.async.js</include>
+                <include>titaniumcore/BigInteger.init1.js</include>
+                <include>titaniumcore/RSA.init1.js</include>
+                <include>titaniumcore/SecureRandom.js</include>
+                <include>titaniumcore/BigInteger.init2.js</include>
+                <include>titaniumcore/RSA.init2.js</include>
+                <include>titaniumcore/nonstructured/nonstructured.js</include>
+                <include>titaniumcore/BigInteger.init3.js</include>
+                <include>titaniumcore/RSA.init3.js</include>
+                <include>titaniumcore/Cipher.js</include>
+                <include>titaniumcore/SOAEP.js</include>
+                <include>titaniumcore/RSAKeyFormat.js</include>
+                <include>titaniumcore/BitPadding.js</include>
+                <include>titaniumcore/RSAMessageFormat.js</include>
+                <include>titaniumcore/RSAMessageFormatSOAEP.js</include>
+                <include>titaniumcore/RSAMessageFormatBitPadding.js</include>
+              </includes>
+            </aggregation>
+          </aggregations>
+        </configuration>
+      </plugin>
       <!-- GWT Maven Plugin -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
@@ -81,9 +126,8 @@
           </modules>
           <mode>selenium</mode>
           <selenium>127.0.0.1:4444/firefox</selenium>
-<!--           <productionMode>false</productionMode> -->
+          <productionMode>true</productionMode>
           <testTimeOut>300</testTimeOut>
-          <webMode>true</webMode>
         </configuration>
       </plugin>
       <plugin>
