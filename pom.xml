@@ -74,32 +74,34 @@
           </execution>
         </executions>
         <configuration>
+          <sourceDirectory>src/main/javascript</sourceDirectory>
+          <outputDirectory>target/generated-resources/minified-javascript</outputDirectory>
           <aggregations>
             <aggregation>
               <insertNewLine>true</insertNewLine>
               <output>${compiler.output.directory}/de/kune/phoenix/public/all.js</output>
-              <inputDir>src/main/javascript</inputDir>
+              <inputDir>target/generated-resources/minified-javascript</inputDir>
               <includes>
-                <include>titaniumcore/tools/packages.js</include>
-                <include>titaniumcore/tools/isarray.js</include>
-                <include>titaniumcore/tools/binary.js</include>
-                <include>titaniumcore/tools/elapse.js</include>
-                <include>titaniumcore/tools/trace.async.js</include>
-                <include>titaniumcore/BigInteger.init1.js</include>
-                <include>titaniumcore/RSA.init1.js</include>
-                <include>titaniumcore/SecureRandom.js</include>
-                <include>titaniumcore/BigInteger.init2.js</include>
-                <include>titaniumcore/RSA.init2.js</include>
-                <include>titaniumcore/nonstructured/nonstructured.js</include>
-                <include>titaniumcore/BigInteger.init3.js</include>
-                <include>titaniumcore/RSA.init3.js</include>
-                <include>titaniumcore/Cipher.js</include>
-                <include>titaniumcore/SOAEP.js</include>
-                <include>titaniumcore/RSAKeyFormat.js</include>
-                <include>titaniumcore/BitPadding.js</include>
-                <include>titaniumcore/RSAMessageFormat.js</include>
-                <include>titaniumcore/RSAMessageFormatSOAEP.js</include>
-                <include>titaniumcore/RSAMessageFormatBitPadding.js</include>
+                <include>titaniumcore/tools/packages*.js</include>
+                <include>titaniumcore/tools/isarray*.js</include>
+                <include>titaniumcore/tools/binary*.js</include>
+                <include>titaniumcore/tools/elapse*.js</include>
+                <include>titaniumcore/tools/trace.async*.js</include>
+                <include>titaniumcore/BigInteger.init1*.js</include>
+                <include>titaniumcore/RSA.init1*.js</include>
+                <include>titaniumcore/SecureRandom*.js</include>
+                <include>titaniumcore/BigInteger.init2*.js</include>
+                <include>titaniumcore/RSA.init2*.js</include>
+                <include>titaniumcore/nonstructured/nonstructured*.js</include>
+                <include>titaniumcore/BigInteger.init3*.js</include>
+                <include>titaniumcore/RSA.init3*.js</include>
+                <include>titaniumcore/Cipher*.js</include>
+                <include>titaniumcore/SOAEP*.js</include>
+                <include>titaniumcore/RSAKeyFormat*.js</include>
+                <include>titaniumcore/BitPadding*.js</include>
+                <include>titaniumcore/RSAMessageFormat*.js</include>
+                <include>titaniumcore/RSAMessageFormatSOAEP*.js</include>
+                <include>titaniumcore/RSAMessageFormatBitPadding*.js</include>
               </includes>
             </aggregation>
           </aggregations>
