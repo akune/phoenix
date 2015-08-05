@@ -20,28 +20,24 @@ public class GwtTestRsaKeyPair extends AsyncGwtTestBase {
 
 	public void testEncryptPublicDecryptPrivateWithGivenKeyPairBitPadding() {
 		delayTestFinish(120000);
-		RsaKeyPairFactory generator = new RsaKeyPairFactory();
-		generator.createAsync(PUBLIC_KEY, PRIVATE_KEY, new TestCallback<RsaKeyPair, Exception>() {
-			@Override
-			public void handleSuccess(RsaKeyPair result) {
+		CipherSuite.init(new TestCallback<Void, Exception>() {
+			protected void handleSuccess(Void nothing) {
+				RsaKeyPairFactory generator = new RsaKeyPairFactory();
+				RsaKeyPair result = generator.create(PUBLIC_KEY, PRIVATE_KEY);
+				result.setMessageFormat(MessageFormat.BitPadding);
+				assertNotNull(result);
 				try {
-					result.setMessageFormat(MessageFormat.BitPadding);
-					assertNotNull(result);
-					try {
-						final String plainText = "Plain Text";
-						GWT.log("plain text: " + plainText);
-						byte[] plainBytes = plainText.getBytes("UTF-8");
-						GWT.log("plain bytes: " + Arrays.toString(plainBytes));
-						byte[] encrypted = result.encrypt(KeyType.PUBLIC, plainBytes);
-						GWT.log("Java encrypted: " + Arrays.toString(encrypted));
-						byte[] decryptedBytes = result.decrypt(KeyType.PRIVATE, encrypted);
-						GWT.log("decrypted bytes: " + decryptedBytes);
-						assertEquals(plainText, new String(decryptedBytes, "UTF-8"));
-					} catch (UnsupportedEncodingException e) {
-						fail("UTF-8 not supported");
-					}
-				} catch (Throwable e) {
-					reportUncaughtException(e);
+					final String plainText = "Plain Text";
+					GWT.log("plain text: " + plainText);
+					byte[] plainBytes = plainText.getBytes("UTF-8");
+					GWT.log("plain bytes: " + Arrays.toString(plainBytes));
+					byte[] encrypted = result.encrypt(KeyType.PUBLIC, plainBytes);
+					GWT.log("Java encrypted: " + Arrays.toString(encrypted));
+					byte[] decryptedBytes = result.decrypt(KeyType.PRIVATE, encrypted);
+					GWT.log("decrypted bytes: " + decryptedBytes);
+					assertEquals(plainText, new String(decryptedBytes, "UTF-8"));
+				} catch (UnsupportedEncodingException e) {
+					fail("UTF-8 not supported");
 				}
 			}
 		});
@@ -49,89 +45,77 @@ public class GwtTestRsaKeyPair extends AsyncGwtTestBase {
 
 	public void testEncryptPublicDecryptPrivateWithGivenKeyPairSoaepPadding() {
 		delayTestFinish(120000);
-		RsaKeyPairFactory generator = new RsaKeyPairFactory();
-		generator.createAsync(PUBLIC_KEY, PRIVATE_KEY, new TestCallback<RsaKeyPair, Exception>() {
-			@Override
-			public void handleSuccess(RsaKeyPair result) {
+		CipherSuite.init(new TestCallback<Void, Exception>() {
+			protected void handleSuccess(Void nothing) {
+				RsaKeyPairFactory generator = new RsaKeyPairFactory();
+				RsaKeyPair result = generator.create(PUBLIC_KEY, PRIVATE_KEY);
+				result.setMessageFormat(MessageFormat.SOAEP);
+				assertNotNull(result);
 				try {
-					result.setMessageFormat(MessageFormat.SOAEP);
-					assertNotNull(result);
-					try {
-						final String plainText = "Plain Text";
-						GWT.log("plain text: " + plainText);
-						byte[] plainBytes = plainText.getBytes("UTF-8");
-						GWT.log("plain bytes: " + Arrays.toString(plainBytes));
-						byte[] encrypted = result.encrypt(KeyType.PUBLIC, plainBytes);
-						GWT.log("Java encrypted: " + Arrays.toString(encrypted));
-						byte[] decryptedBytes = result.decrypt(KeyType.PRIVATE, encrypted);
-						GWT.log("decrypted bytes: " + decryptedBytes);
-						assertEquals(plainText, new String(decryptedBytes, "UTF-8"));
-					} catch (UnsupportedEncodingException e) {
-						fail("UTF-8 not supported");
-					}
-				} catch (Throwable e) {
-					reportUncaughtException(e);
+					final String plainText = "Plain Text";
+					GWT.log("plain text: " + plainText);
+					byte[] plainBytes = plainText.getBytes("UTF-8");
+					GWT.log("plain bytes: " + Arrays.toString(plainBytes));
+					byte[] encrypted = result.encrypt(KeyType.PUBLIC, plainBytes);
+					GWT.log("Java encrypted: " + Arrays.toString(encrypted));
+					byte[] decryptedBytes = result.decrypt(KeyType.PRIVATE, encrypted);
+					GWT.log("decrypted bytes: " + decryptedBytes);
+					assertEquals(plainText, new String(decryptedBytes, "UTF-8"));
+				} catch (UnsupportedEncodingException e) {
+					fail("UTF-8 not supported");
 				}
 			}
 		});
 	}
-	
+
 	public void testEncryptPrivateDecryptPublicWithGivenKeyPairSoaepPadding() {
 		delayTestFinish(120000);
-		RsaKeyPairFactory generator = new RsaKeyPairFactory();
-		generator.createAsync(PUBLIC_KEY, PRIVATE_KEY, new TestCallback<RsaKeyPair, Exception>() {
-			@Override
-			public void handleSuccess(RsaKeyPair result) {
+		CipherSuite.init(new TestCallback<Void, Exception>() {
+			protected void handleSuccess(Void nothing) {
+				RsaKeyPairFactory generator = new RsaKeyPairFactory();
+				RsaKeyPair result = generator.create(PUBLIC_KEY, PRIVATE_KEY);
+				result.setMessageFormat(MessageFormat.SOAEP);
+				assertNotNull(result);
 				try {
-					result.setMessageFormat(MessageFormat.SOAEP);
-					assertNotNull(result);
-					try {
-						final String plainText = "Plain Text";
-						GWT.log("plain text: " + plainText);
-						byte[] plainBytes = plainText.getBytes("UTF-8");
-						GWT.log("plain bytes: " + Arrays.toString(plainBytes));
-						byte[] encrypted = result.encrypt(KeyType.PRIVATE, plainBytes);
-						GWT.log("Java encrypted: " + Arrays.toString(encrypted));
-						byte[] decryptedBytes = result.decrypt(KeyType.PUBLIC, encrypted);
-						GWT.log("decrypted bytes: " + decryptedBytes);
-						assertEquals(plainText, new String(decryptedBytes, "UTF-8"));
-					} catch (UnsupportedEncodingException e) {
-						fail("UTF-8 not supported");
-					}
-				} catch (Throwable e) {
-					reportUncaughtException(e);
+					final String plainText = "Plain Text";
+					GWT.log("plain text: " + plainText);
+					byte[] plainBytes = plainText.getBytes("UTF-8");
+					GWT.log("plain bytes: " + Arrays.toString(plainBytes));
+					byte[] encrypted = result.encrypt(KeyType.PRIVATE, plainBytes);
+					GWT.log("Java encrypted: " + Arrays.toString(encrypted));
+					byte[] decryptedBytes = result.decrypt(KeyType.PUBLIC, encrypted);
+					GWT.log("decrypted bytes: " + decryptedBytes);
+					assertEquals(plainText, new String(decryptedBytes, "UTF-8"));
+				} catch (UnsupportedEncodingException e) {
+					fail("UTF-8 not supported");
 				}
 			}
 		});
 	}
-	
+
 	public void testEncryptPrivateDecryptPublicWithGivenKeyPairBitPadding() {
 		delayTestFinish(120000);
-		RsaKeyPairFactory generator = new RsaKeyPairFactory();
-		generator.createAsync(PUBLIC_KEY, PRIVATE_KEY, new TestCallback<RsaKeyPair, Exception>() {
-			@Override
-			public void handleSuccess(RsaKeyPair result) {
+		CipherSuite.init(new TestCallback<Void, Exception>() {
+			protected void handleSuccess(Void nothing) {
+				RsaKeyPairFactory generator = new RsaKeyPairFactory();
+				RsaKeyPair result = generator.create(PUBLIC_KEY, PRIVATE_KEY);
+				result.setMessageFormat(MessageFormat.BitPadding);
+				assertNotNull(result);
 				try {
-					result.setMessageFormat(MessageFormat.BitPadding);
-					assertNotNull(result);
-					try {
-						final String plainText = "Plain Text";
-						GWT.log("plain text: " + plainText);
-						byte[] plainBytes = plainText.getBytes("UTF-8");
-						GWT.log("plain bytes: " + Arrays.toString(plainBytes));
-						byte[] encrypted = result.encrypt(KeyType.PRIVATE, plainBytes);
-						GWT.log("Java encrypted: " + Arrays.toString(encrypted));
-						byte[] decryptedBytes = result.decrypt(KeyType.PUBLIC, encrypted);
-						GWT.log("decrypted bytes: " + decryptedBytes);
-						assertEquals(plainText, new String(decryptedBytes, "UTF-8"));
-					} catch (UnsupportedEncodingException e) {
-						fail("UTF-8 not supported");
-					}
-				} catch (Throwable e) {
-					reportUncaughtException(e);
+					final String plainText = "Plain Text";
+					GWT.log("plain text: " + plainText);
+					byte[] plainBytes = plainText.getBytes("UTF-8");
+					GWT.log("plain bytes: " + Arrays.toString(plainBytes));
+					byte[] encrypted = result.encrypt(KeyType.PRIVATE, plainBytes);
+					GWT.log("Java encrypted: " + Arrays.toString(encrypted));
+					byte[] decryptedBytes = result.decrypt(KeyType.PUBLIC, encrypted);
+					GWT.log("decrypted bytes: " + decryptedBytes);
+					assertEquals(plainText, new String(decryptedBytes, "UTF-8"));
+				} catch (UnsupportedEncodingException e) {
+					fail("UTF-8 not supported");
 				}
 			}
 		});
 	}
-	
+
 }

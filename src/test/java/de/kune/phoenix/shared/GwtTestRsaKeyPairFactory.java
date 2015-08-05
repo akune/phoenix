@@ -18,9 +18,11 @@ public class GwtTestRsaKeyPairFactory extends AsyncGwtTestBase {
 
 	public void testEncryptPublicDecryptPrivateWithGeneratedKey() {
 		delayTestFinish(120000);
-		RsaKeyPairFactory generator = new RsaKeyPairFactory();
-		generator.generateKeyPairAsync(KeyStrength.WEAK, PublicExponent.SMALLEST,
-				new TestCallback<RsaKeyPair, Exception>() {
+		CipherSuite.init(new TestCallback<Void, Exception>() {
+			protected void handleSuccess(Void nothing) {
+				RsaKeyPairFactory generator = new RsaKeyPairFactory();
+				generator.generateKeyPairAsync(KeyStrength.WEAK, PublicExponent.SMALLEST,
+						new TestCallback<RsaKeyPair, Exception>() {
 					@Override
 					public void handleSuccess(RsaKeyPair result) {
 						try {
@@ -43,13 +45,17 @@ public class GwtTestRsaKeyPairFactory extends AsyncGwtTestBase {
 						}
 					}
 				}, new TestCallback<Integer, Void>(false));
+			}
+		});
 	}
 
 	public void testGenerateWeakRsaKey() {
 		delayTestFinish(120000);
-		RsaKeyPairFactory generator = new RsaKeyPairFactory();
-		generator.generateKeyPairAsync(KeyStrength.WEAK, PublicExponent.SMALLEST,
-				new TestCallback<RsaKeyPair, Exception>() {
+		CipherSuite.init(new TestCallback<Void, Exception>() {
+			protected void handleSuccess(Void nothing) {
+				RsaKeyPairFactory generator = new RsaKeyPairFactory();
+				generator.generateKeyPairAsync(KeyStrength.WEAK, PublicExponent.SMALLEST,
+						new TestCallback<RsaKeyPair, Exception>() {
 					@Override
 					public void handleSuccess(RsaKeyPair result) {
 						assertSame("invalid public key encrypt max size", 47, result.getEncryptMaxSize(KeyType.PUBLIC));
@@ -59,22 +65,29 @@ public class GwtTestRsaKeyPairFactory extends AsyncGwtTestBase {
 						finishTest();
 					}
 				}, new TestCallback<Integer, Void>(false));
+			}
+		});
 	}
 
 	public void testGenerateMediumRsaKey() {
 		delayTestFinish(120000);
-		RsaKeyPairFactory generator = new RsaKeyPairFactory();
-		generator.generateKeyPairAsync(KeyStrength.MEDIUM, PublicExponent.SMALLEST,
-				new TestCallback<RsaKeyPair, Exception>() {
-			@Override
-			public void handleSuccess(RsaKeyPair result) {
-				assertSame("invalid public key encrypt max size", 111, result.getEncryptMaxSize(KeyType.PUBLIC));
-				assertSame("invalid private key encrypt max size", 111,
-						result.getEncryptMaxSize(KeyType.PRIVATE));
-				assertNotNull(result);
-				finishTest();
+		CipherSuite.init(new TestCallback<Void, Exception>() {
+			protected void handleSuccess(Void nothing) {
+				RsaKeyPairFactory generator = new RsaKeyPairFactory();
+				generator.generateKeyPairAsync(KeyStrength.MEDIUM, PublicExponent.SMALLEST,
+						new TestCallback<RsaKeyPair, Exception>() {
+					@Override
+					public void handleSuccess(RsaKeyPair result) {
+						assertSame("invalid public key encrypt max size", 111,
+								result.getEncryptMaxSize(KeyType.PUBLIC));
+						assertSame("invalid private key encrypt max size", 111,
+								result.getEncryptMaxSize(KeyType.PRIVATE));
+						assertNotNull(result);
+						finishTest();
+					}
+				}, new TestCallback<Integer, Void>(false));
 			}
-		}, new TestCallback<Integer, Void>(false));
+		});
 	}
-	
+
 }
