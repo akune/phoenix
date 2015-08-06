@@ -75,13 +75,15 @@
         </executions>
         <configuration>
           <sourceDirectory>src/main/javascript</sourceDirectory>
+          <nosuffix>true</nosuffix>
           <outputDirectory>target/generated-resources/minified-javascript</outputDirectory>
           <aggregations>
             <aggregation>
               <insertNewLine>true</insertNewLine>
-              <output>${compiler.output.directory}/de/kune/phoenix/public/all.js</output>
+              <output>${compiler.output.directory}/de/kune/phoenix/public/titaniumcore.js</output>
               <inputDir>target/generated-resources/minified-javascript</inputDir>
               <includes>
+                <include>${project.basedir}/src/main/javascript/titaniumcore/header.txt</include>
                 <include>titaniumcore/tools/packages*.js</include>
                 <include>titaniumcore/tools/isarray*.js</include>
                 <include>titaniumcore/tools/binary*.js</include>

@@ -1,0 +1,59 @@
+/*
+ * titaniumcore.js
+ *
+ * A minified and aggregated version of Atsushi Oka's JavaScript Cryptography Toolkit 
+ * "Titaniumcore Project" [ http://ats.oka.nu/titaniumcore/js/crypto/readme.txt ]. 
+ *
+ * Copyright(c) 2009 Atsushi Oka [ http://oka.nu/ ]
+ * 
+ * Acknowledgments:
+ *
+ *   The core algorithm of Cipher.js is originally written by
+ *   Michiel van Everdingen.
+ *
+ *       The original form can be referred at 
+ *           http://home.versatel.nl/MAvanEverdingen/Code/code.html
+ *
+ *       Contact of the Author
+ *           Michiel van Everdingen
+ *           http://home.versatel.nl/MAvanEverdingen/index.html
+ *
+ *       See Cipher.readme.txt
+ *
+ *
+ *   ---
+ *
+ *   Following files were originally written by Tom Wu :
+ *
+ *       SecureRandom.js
+ *       BigInteger.init1.js
+ *       BigInteger.init2.js
+ *       BigInteger.init3.js
+ *       RSA.init1.js
+ *       RSA.init2.js
+ *       RSA.init3.js
+ *
+ *       Copyright (c) 2005  Tom Wu
+ *       All Rights Reserved.
+ *       http://www-cs-students.stanford.edu/~tjw/jsbn/
+ *
+ *       See "LICENSE" for details.
+ *       http://www-cs-students.stanford.edu/~tjw/jsbn/LICENSE
+ *
+ *       See RSA.readme.txt
+ *
+ *   ---
+ *
+ *   jsSHA.js is written by Brian Turek [ http://sourceforge.net/users/caligatio ].
+ *
+ *       > A JavaScript implementation of the SHA family of hashes, 
+ *       > as defined in FIPS PUB 180-2
+ *       > Version 1.1 Copyright Brian Turek 2008
+ *       > Distributed under the BSD License
+ *       > See http://jssha.sourceforge.net/ for more information
+ *       >
+ *       > Several functions taken from Paul Johnson
+ *
+ *       See jsSHA.readme.txt
+ * 
+ */

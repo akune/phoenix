@@ -11,7 +11,7 @@ import com.google.gwt.core.client.ScriptInjector;
 
 public class CipherSuite {
 
-	private static final List<String> SCRIPT_FILES = Arrays.asList(new String[] { "{moduleBaseUrl}/all.js" });
+	private static final List<String> SCRIPT_FILES = Arrays.asList(new String[] { "{moduleBaseUrl}/titaniumcore.js" });
 
 	private static enum State {
 		UNINITIALIZED, INITIALIZING, READY;
