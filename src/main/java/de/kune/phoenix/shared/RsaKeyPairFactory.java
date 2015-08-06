@@ -1,5 +1,8 @@
 package de.kune.phoenix.shared;
 
+import static de.kune.phoenix.shared.JsArrayUtil.toByteArray;
+import static de.kune.phoenix.shared.JsArrayUtil.toJsArrayNumber;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -73,7 +76,7 @@ public class RsaKeyPairFactory {
 
 	protected static class RsaKeyPairJso extends JavaScriptObject implements RsaKeyPair {
 		protected RsaKeyPairJso() {
-		};
+		}
 
 		public static native RsaKeyPairJso create(String publicKey, String privateKey) /*-{
 			$wnd.__unit( "KeyPairGenerator" );
@@ -184,14 +187,6 @@ public class RsaKeyPairFactory {
 			}
 		}
 
-		private byte[] toByteArray(JsArrayNumber arrayNumber) {
-			byte[] result = new byte[arrayNumber.length()];
-			for (int i = 0; i < result.length; i++) {
-				result[i] = (byte) arrayNumber.get(i);
-			}
-			return result;
-		}
-
 		@Override
 		public final byte[] decrypt(KeyType keyType, byte[] encrypted) {
 			switch (keyType) {
@@ -202,14 +197,6 @@ public class RsaKeyPairFactory {
 			default:
 				throw new IllegalArgumentException("unknown key type " + keyType);
 			}
-		}
-
-		private JsArrayNumber toJsArrayNumber(byte[] encrypted) {
-			JsArrayNumber jsArray = JavaScriptObject.createArray(encrypted.length).cast();
-			for (int i = 0; i < encrypted.length; i++) {
-				jsArray.set(i, encrypted[i] >= 0 ? encrypted[i] : encrypted[i] + 256);
-			}
-			return jsArray;
 		}
 
 		@Override

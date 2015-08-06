@@ -12,6 +12,11 @@ import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
+import de.kune.phoenix.shared.Cipher;
+import de.kune.phoenix.shared.CipherFactory;
+import de.kune.phoenix.shared.CipherFactory.Algorithm;
+import de.kune.phoenix.shared.CipherFactory.BlockCipherMode;
+import de.kune.phoenix.shared.CipherFactory.Padding;
 import de.kune.phoenix.shared.CipherSuite;
 import de.kune.phoenix.shared.RsaKeyPair;
 import de.kune.phoenix.shared.RsaKeyPairFactory;
@@ -32,6 +37,14 @@ public class Main implements EntryPoint {
 			public void onFailure(Exception reason) {}
 			@Override
 			public void onSuccess(Void result) {
+//				new CipherFactory().generate(Algorithm.RIJNDAEL, CipherFactory.KeyStrength.STRONGEST, BlockCipherMode.ECB,
+//						Padding.PKCS7);
+
+				
+				Cipher cipher = new CipherFactory().create(Algorithm.RIJNDAEL,
+						"AupyROrgqnkRZRiHGQXTkdoTcWj+8W1NBkfd311kmFk=", BlockCipherMode.ECB, Padding.PKCS7);
+				GWT.log("decrypted: " + new String(cipher.decrypt(cipher.encrypt("Hello".getBytes()))));
+				
 				RsaKeyPairFactory factory = new RsaKeyPairFactory();
 				RsaKeyPair keyPair = factory.create(
 						"cbVz3B4xbxx2E3l4l0LeCnjD7GkFXyshtxxhtnN5hF8sUVjmdD0zYAQgO7ca2pN4pazU5R7xx1EGr80jZBW5WZH0yA",
