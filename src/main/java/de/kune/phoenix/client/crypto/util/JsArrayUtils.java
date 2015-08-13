@@ -1,11 +1,11 @@
-package de.kune.phoenix.shared;
+package de.kune.phoenix.client.crypto.util;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayNumber;
 
-public final class JsArrayUtil {
+public final class JsArrayUtils {
 
-	private JsArrayUtil() {
+	private JsArrayUtils() {
 		// Do nothing.
 	}
 	

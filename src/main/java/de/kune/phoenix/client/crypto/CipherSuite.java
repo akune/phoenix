@@ -1,4 +1,4 @@
-package de.kune.phoenix.shared;
+package de.kune.phoenix.client.crypto;
 
 import static com.google.gwt.core.client.ScriptInjector.TOP_WINDOW;
 

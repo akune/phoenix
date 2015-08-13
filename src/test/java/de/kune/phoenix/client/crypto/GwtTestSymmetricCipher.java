@@ -1,16 +1,17 @@
-package de.kune.phoenix.shared;
+package de.kune.phoenix.client.crypto;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 
 import com.google.gwt.core.shared.GWT;
 
-import de.kune.phoenix.shared.CipherFactory.Algorithm;
-import de.kune.phoenix.shared.CipherFactory.BlockCipherMode;
-import de.kune.phoenix.shared.CipherFactory.KeyStrength;
-import de.kune.phoenix.shared.CipherFactory.Padding;
+import de.kune.phoenix.client.AsyncGwtTestBase;
+import de.kune.phoenix.client.crypto.SymmetricCipher.Algorithm;
+import de.kune.phoenix.client.crypto.SymmetricCipher.BlockCipherMode;
+import de.kune.phoenix.client.crypto.SymmetricCipher.Padding;
+import de.kune.phoenix.client.crypto.SecretKey.KeyStrength;
 
-public class GwtTestCipher extends AsyncGwtTestBase {
+public class GwtTestSymmetricCipher extends AsyncGwtTestBase {
 
 	@Override
 	public String getModuleName() {
@@ -22,14 +23,14 @@ public class GwtTestCipher extends AsyncGwtTestBase {
 		CipherSuite.init(new TestCallback<Void, Exception>() {
 			@Override
 			protected void handleSuccess(Void result) {
-				for (Algorithm algorithm : Algorithm.values()) {
-					for (KeyStrength keyStrength : KeyStrength.values()) {
+				for (KeyStrength keyStrength : KeyStrength.values()) {
+					SecretKey secretKey = SymmetricCipher.Factory.generateSecretKey(keyStrength);
+					for (Algorithm algorithm : Algorithm.values()) {
 						for (BlockCipherMode blockCipherMode : BlockCipherMode.values()) {
 							for (Padding padding : Padding.values()) {
 								try {
-								Cipher cipher = new CipherFactory().generate(algorithm, keyStrength, blockCipherMode,
-										padding);
-								doTestCipher(cipher);
+									SymmetricCipher cipher = SymmetricCipher.Factory.createCipher(algorithm, blockCipherMode, padding);
+									doTestCipher(cipher, secretKey);
 								} catch (Throwable t) {
 									fail("algorithm=" + algorithm + ", key strength=" + keyStrength
 											+ ", block cipher mode=" + blockCipherMode + ", padding=" + padding
@@ -48,22 +49,22 @@ public class GwtTestCipher extends AsyncGwtTestBase {
 		CipherSuite.init(new TestCallback<Void, Exception>() {
 			@Override
 			protected void handleSuccess(Void result) {
-				Cipher cipher = new CipherFactory().create(Algorithm.RIJNDAEL,
-						"AupyROrgqnkRZRiHGQXTkdoTcWj+8W1NBkfd311kmFk=", BlockCipherMode.ECB, Padding.PKCS7);
-				doTestCipher(cipher);
+				SecretKey secretKey = SymmetricCipher.Factory.createSecretKey("AupyROrgqnkRZRiHGQXTkdoTcWj+8W1NBkfd311kmFk=");
+				SymmetricCipher cipher = SymmetricCipher.Factory.createCipher(Algorithm.RIJNDAEL, BlockCipherMode.ECB, Padding.PKCS7);
+				doTestCipher(cipher, secretKey);
 			}
 		});
 	}
 
-	private void doTestCipher(Cipher cipher) {
+	private void doTestCipher(SymmetricCipher cipher, SecretKey secretKey) {
 		try {
 			String plainString = "Plain Text";
 			GWT.log("plain text: " + plainString);
 			byte[] plainBytes = plainString.getBytes("UTF-8");
 			GWT.log("plain bytes: " + Arrays.toString(plainBytes));
-			byte[] encryptedBytes = cipher.encrypt(plainBytes);
+			byte[] encryptedBytes = cipher.encrypt(secretKey, plainBytes);
 			GWT.log("encrypted bytes: " + Arrays.toString(encryptedBytes));
-			byte[] decryptedBytes = cipher.decrypt(encryptedBytes);
+			byte[] decryptedBytes = cipher.decrypt(secretKey, encryptedBytes);
 			GWT.log("decrypted bytes: " + Arrays.toString(decryptedBytes));
 			assertTrue("expected " + Arrays.toString(plainBytes) + " but was " + Arrays.toString(decryptedBytes),
 					Arrays.equals(plainBytes, decryptedBytes));
