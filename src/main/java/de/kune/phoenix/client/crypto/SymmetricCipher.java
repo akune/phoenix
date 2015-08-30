@@ -8,6 +8,7 @@ import com.google.gwt.core.client.JsArrayNumber;
 
 import de.kune.phoenix.client.crypto.SecretKey.KeyStrength;
 import de.kune.phoenix.client.crypto.util.Base64Utils;
+import de.kune.phoenix.client.crypto.util.Sha256;
 
 public interface SymmetricCipher extends Cipher {
 
@@ -72,6 +73,11 @@ public interface SymmetricCipher extends Cipher {
 				byte[] key = new byte[keyStrength.getKeySize() / 8];
 				new java.util.Random().nextBytes(key);
 				return create(key);
+			}
+
+			@Override
+			public String getId() {
+				return new Sha256().feed("SECRET_KEY").feed(getPlainKey()).iterate(250).toBase64();
 			}
 
 		}

@@ -5,13 +5,13 @@ import java.util.Arrays;
 import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayNumber;
-import com.google.gwt.core.shared.GWT;
 
 import de.kune.phoenix.client.crypto.AsymmetricCipher.Factory.KeyPairImpl.PrivateKeyImpl;
 import de.kune.phoenix.client.crypto.AsymmetricCipher.Factory.KeyPairImpl.PublicKeyImpl;
 import de.kune.phoenix.client.crypto.KeyPair.KeyStrength;
 import de.kune.phoenix.client.crypto.KeyPair.PublicExponent;
 import de.kune.phoenix.client.crypto.util.JsArrayUtils;
+import de.kune.phoenix.client.crypto.util.Sha256;
 
 public interface AsymmetricCipher extends Cipher {
 
@@ -38,11 +38,19 @@ public interface AsymmetricCipher extends Cipher {
 				protected PrivateKeyImpl(String key) {
 					super(key);
 				}
+
+				public String getId() {
+					return new Sha256().feed("PRIVATE_KEY").feed(getPlainKey()).iterate(250).toBase64();
+				}
 			}
 
 			protected static class PublicKeyImpl extends EncodedKey implements PublicKey {
 				protected PublicKeyImpl(String key) {
 					super(key);
+				}
+
+				public String getId() {
+					return new Sha256().feed("PUBLIC_KEY").feed(getPlainKey()).iterate(250).toBase64();
 				}
 			}
 
@@ -60,7 +68,6 @@ public interface AsymmetricCipher extends Cipher {
 			public final PublicKey getPublicKey() {
 				return publicKey;
 			}
-
 		}
 
 		public static void generateKeyPairAsync(final KeyStrength strength, final PublicExponent exponent,
@@ -93,24 +100,16 @@ public interface AsymmetricCipher extends Cipher {
 			var progress = function(c){
 				progressCallback.@com.google.gwt.core.client.Callback::onSuccess(Ljava/lang/Object;)(@ja‌​va.lang.Integer::valueOf(Ljava/lang/String;)('' + c));
 			}
-			var result = function(result){
-			console.log('result:');
-			console.log(arguments);
-console.log('->1');
-var encodedPublicKey = $wnd.base64_encode(result.publicKeyBytes());
-var encodedPrivateKey = $wnd.base64_encode(result.privateKeyBytes());
-console.log( encodedPublicKey );
-console.log( encodedPrivateKey );
-var publicKey = @de.kune.phoenix.client.crypto.AsymmetricCipher.Factory.KeyPairImpl.PublicKeyImpl::new(Ljava/lang/String;)(encodedPublicKey);
-var privateKey = @de.kune.phoenix.client.crypto.AsymmetricCipher.Factory.KeyPairImpl.PrivateKeyImpl::new(Ljava/lang/String;)(encodedPrivateKey);
-console.log('->2');
-var keyPair = @de.kune.phoenix.client.crypto.AsymmetricCipher.Factory.KeyPairImpl::new(Lde/kune/phoenix/client/crypto/PublicKey;Lde/kune/phoenix/client/crypto/PrivateKey;)(publicKey,privateKey);
-//var keyPair = @de.kune.phoenix.client.crypto.AsymmetricCipher.Factory.KeyPairImpl::new(Ljava/lang/String;Ljava/lang/String;)(encodedPublicKey,encodedPrivateKey);
-console.log( keyPair );
-console.log('->3');
+			var result = function(result) {
+				var encodedPublicKey = $wnd.base64_encode(result.publicKeyBytes());
+				var encodedPrivateKey = $wnd.base64_encode(result.privateKeyBytes());
+				var publicKey = @de.kune.phoenix.client.crypto.AsymmetricCipher.Factory.KeyPairImpl.PublicKeyImpl::new(Ljava/lang/String;)(encodedPublicKey);
+				var privateKey = @de.kune.phoenix.client.crypto.AsymmetricCipher.Factory.KeyPairImpl.PrivateKeyImpl::new(Ljava/lang/String;)(encodedPrivateKey);
+				var keyPair = @de.kune.phoenix.client.crypto.AsymmetricCipher.Factory.KeyPairImpl::new(Lde/kune/phoenix/client/crypto/PublicKey;Lde/kune/phoenix/client/crypto/PrivateKey;)(publicKey,privateKey);
 				c.@com.google.gwt.core.client.Callback::onSuccess(Ljava/lang/Object;)(keyPair);
 			};
-			var done = function(result) {};
+			var done = function(result) {
+			};
 			var rsa = new RSA();
 			rsa.messageFormat = RSAMessageFormatSOAEP;
 			return rsa.generateAsync( keySize, exponent, progress, result, done );
@@ -126,17 +125,11 @@ console.log('->3');
 				}
 
 				private final native JavaScriptObject publicKeyEncrypt(String publicKey, JsArrayNumber plain) /*-{
-				console.log('key: ' + publicKey);
-				console.log('decoded key: ' + $wnd.base64_decode(publicKey));
-				console.log('encrypting: ' + plain);
 					this.rsa.publicKeyBytes($wnd.base64_decode(publicKey));
 					return this.rsa.publicEncrypt(plain);
 				}-*/;
 
 				private final native JavaScriptObject privateKeyEncrypt(String privateKey, JsArrayNumber plain) /*-{
-				console.log('key: ' + privateKey);
-				console.log('decoded key: ' + $wnd.base64_decode(privateKey));
-				console.log('encrypting: ' + plain);
 					this.rsa.privateKeyBytes($wnd.base64_decode(privateKey));
 					return this.rsa.privateEncrypt(plain);
 				}-*/;
@@ -175,7 +168,6 @@ console.log('->3');
 					
 					var rsa = new RSA();
 					if (messageFormat == 'SOAEP') {
-						console.log('SOAEP');
 						rsa.messageFormat = RSAMessageFormatSOAEP;
 					} else if (messageFormat == 'BitPadding') {
 						rsa.messageFormat = RSAMessageFormatBitPadding;
@@ -219,25 +211,14 @@ console.log('->3');
 				}
 			}
 
-			private native final static void log(Object message) /*-{
-				console.log(message);
-			}-*/;
-
 			@Override
 			public final byte[] encrypt(PublicKey publicKey, byte[] plain) {
-				log("key: " + publicKey.getEncodedKey());
-				log("key: " + Arrays.toString(publicKey.getPlainKey()));
-				log("plain: " + Arrays.toString(plain));
 				return JsArrayUtils.toByteArray((JsArrayNumber) rsa
 						.publicKeyEncrypt(publicKey.getEncodedKey(), JsArrayUtils.toJsArrayNumber(plain)).cast());
 			}
 
 			@Override
 			public final byte[] encrypt(PrivateKey privateKey, byte[] plain) {
-				GWT.log("Private key: " + privateKey);
-				GWT.log("Private key: " + privateKey.getEncodedKey());
-				GWT.log("Plain array: " + Arrays.toString(plain));
-				GWT.log("Plain js array: " + JsArrayUtils.toJsArrayNumber(plain));
 				return JsArrayUtils.toByteArray((JsArrayNumber) rsa
 						.privateKeyEncrypt(privateKey.getEncodedKey(), JsArrayUtils.toJsArrayNumber(plain)).cast());
 			}
@@ -260,6 +241,10 @@ console.log('->3');
 			return new AsymmetricCipherImpl(
 					de.kune.phoenix.client.crypto.AsymmetricCipher.Factory.AsymmetricCipherImpl.RsaJso
 							.createRsa(messageFormat.name()));
+		}
+		
+		public static PublicKey createPublicKey(String encodedPublicKey) {
+			return new PublicKeyImpl(encodedPublicKey);
 		}
 
 		public static KeyPair createKeyPair(String encodedPublicKey, String encodedPrivateKey) {

@@ -7,6 +7,7 @@ import java.util.List;
 
 import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.ScriptInjector;
 
 public class CipherSuite {
@@ -20,24 +21,32 @@ public class CipherSuite {
 	private static final CipherSuite instance = new CipherSuite();
 	private static boolean scriptsLoaded;
 
-	public static void init(Callback<Void, Exception> doneCallback) {
+	public static void init(final Callback<Void, Exception> doneCallback) {
+		GWT.log("initializing cipher suite");
 		if (instance.getState() == State.READY) {
-			doneCallback.onSuccess(null);
+			Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+				@Override
+				public void execute() {
+					GWT.log("state was READY");
+					doneCallback.onSuccess(null);
+				}
+			});
 		} else if (instance.getState() == State.UNINITIALIZED) {
+			GWT.log("state was UNINITIALIZED");
 			instance.doInit(doneCallback);
 		} else {
 			throw new IllegalStateException("illegal state " + instance.getState());
 		}
 	}
-	
+
 	public static CipherSuite getInstance() {
 		return instance;
 	}
-	
+
 	public static boolean isReady() {
 		return instance.getState() == State.READY;
 	}
-	
+
 	public static void assertReady() {
 		if (!isReady()) {
 			throw new IllegalStateException("cipher suite is not ready");
@@ -75,6 +84,7 @@ public class CipherSuite {
 	private static void loadScripts(final List<String> scripts, final Callback<Void, Exception> callback) {
 		if (scriptsLoaded || scripts.isEmpty()) {
 			scriptsLoaded = true;
+			GWT.log("initialized cipher suite");
 			callback.onSuccess(null);
 		} else {
 			String script = scripts.iterator().next().replace("{moduleBaseUrl}", GWT.getModuleBaseURL());
@@ -92,6 +102,7 @@ public class CipherSuite {
 						}
 					}).inject();
 		}
+
 	}
 
 	public State getState() {

@@ -1,14 +1,22 @@
 package de.kune.phoenix.client;
 
+import static java.util.Arrays.asList;
+
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
+
+import org.fusesource.restygwt.client.Defaults;
 
 import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.shared.GWT;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.http.client.URL;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
@@ -20,20 +28,26 @@ import com.google.gwt.user.client.ui.Widget;
 
 import de.kune.phoenix.client.crypto.AsymmetricCipher;
 import de.kune.phoenix.client.crypto.CipherSuite;
+import de.kune.phoenix.client.crypto.Key;
 import de.kune.phoenix.client.crypto.KeyPair;
 import de.kune.phoenix.client.crypto.KeyPair.PublicExponent;
-import de.kune.phoenix.client.crypto.SecretKey;
-import de.kune.phoenix.client.crypto.SymmetricCipher;
-import de.kune.phoenix.client.crypto.SymmetricCipher.Algorithm;
-import de.kune.phoenix.client.crypto.SymmetricCipher.BlockCipherMode;
-import de.kune.phoenix.client.crypto.SymmetricCipher.Padding;
+import de.kune.phoenix.client.crypto.PublicKey;
+import de.kune.phoenix.client.messaging.ClientSession;
+import de.kune.phoenix.client.messaging.ConversationSession;
+import de.kune.phoenix.client.messaging.InvitationCallback;
+import de.kune.phoenix.client.messaging.MessageCallback;
+import de.kune.phoenix.shared.Message;
 
 public class Main implements EntryPoint {
+
+	private ConversationSession conversationSession;
 
 	private Panel chatPanel;
 	private Panel mainPanel;
 	private Panel avatarPanel;
 	private Panel speakPanel;
+
+	private ClientSession clientSession;
 
 	private static enum Position {
 		LEFT, RIGHT
@@ -47,6 +61,25 @@ public class Main implements EntryPoint {
 		return widget;
 	}
 
+	private Panel speak(Key key, String label, Position position) {
+		FlowPanel keyPanel = new FlowPanel();
+		keyPanel.add(new Label(label));
+		Anchor keyAnchor = new Anchor(key.getId());
+		keyPanel.add(keyAnchor);
+		final Label keyLabel = new Label(key.getEncodedKey());
+		keyLabel.setVisible(false);
+		keyPanel.add(keyLabel);
+		keyAnchor.addClickHandler(new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				GWT.log("doh!");
+				keyLabel.setVisible(!keyLabel.isVisible());
+			}
+		});
+		speak(keyPanel, position);
+		return keyPanel;
+	}
+
 	protected Label speak(String what, Position position) {
 		final Label label = new Label(what);
 		label.setStyleName("bubble" + (position == Position.RIGHT ? " bubble--alt right" : ""));
@@ -56,6 +89,10 @@ public class Main implements EntryPoint {
 	}
 
 	public void onModuleLoad() {
+		Defaults.setServiceRoot(com.google.gwt.core.client.GWT.getModuleBaseURL()
+				.replace(com.google.gwt.core.client.GWT.getModuleName() + "/", "") + "api");
+		Defaults.setDateFormat(null);
+
 		mainPanel = new FlowPanel();
 		mainPanel.setStyleName("phoenix container");
 		RootPanel.get().add(mainPanel);
@@ -79,21 +116,17 @@ public class Main implements EntryPoint {
 
 			@Override
 			public void onKeyUp(KeyUpEvent event) {
-				// TODO Auto-generated method stub
-				// speak("Key stroke: " + event.getNativeKeyCode() ==
-				// KeyCodes.KEY_ENTER, Position.RIGHT);
 				if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-					speak(((TextBox) event.getSource()).getText(), Position.RIGHT);
+					String text = ((TextBox) event.getSource()).getText();
+//					speak(text, Position.RIGHT);
 					((TextBox) event.getSource()).setText("");
-					// TODO: Encrypt with session key and send
+					conversationSession.send(text);
 				}
 			}
 		});
 
 		speak("Welcome to Phoenix!", Position.LEFT);
-		speak("What is Phoenix?", Position.RIGHT);
-		final Label initializingLabel = speak("Initializing...", Position.LEFT);
-		GWT.log("initializing cipher suite");
+		final Label initializingLabel = speak("Initializing Cipher Suite...", Position.LEFT);
 		CipherSuite.init(new Callback<Void, Exception>() {
 			@Override
 			public void onFailure(Exception reason) {
@@ -103,251 +136,127 @@ public class Main implements EntryPoint {
 			public void onSuccess(Void result) {
 				initializingLabel.setText(initializingLabel.getText() + "done");
 
-				SecretKey secretKey = SymmetricCipher.Factory
-						.createSecretKey("AupyROrgqnkRZRiHGQXTkdoTcWj+8W1NBkfd311kmFk=");
-				SymmetricCipher cipher = SymmetricCipher.Factory.createCipher(Algorithm.RIJNDAEL, BlockCipherMode.ECB,
-						Padding.PKCS7);
-				GWT.log("decrypted: "
-						+ new String(cipher.decrypt(secretKey, cipher.encrypt(secretKey, "Hello".getBytes()))));
+				if (Window.Location.getParameter("pub") != null && Window.Location.getParameter("priv") != null) {
+					speak("Key pair found in request.", Position.LEFT);
+					final KeyPair keyPair = AsymmetricCipher.Factory.createKeyPair(
+							URL.decodePathSegment(Window.Location.getParameter("pub")),
+							URL.decodePathSegment(Window.Location.getParameter("priv")));
+					speak(keyPair.getPublicKey(), "Public key: ", Position.LEFT);
+					speak(keyPair.getPrivateKey(), "Private key: ", Position.LEFT);
+					beginClientSession(keyPair);
+				} else {
+					final Label keyPairMessage = speak("Generating key pair...", Position.LEFT);
+					AsymmetricCipher.Factory.generateKeyPairAsync(KeyPair.KeyStrength.MEDIUM, PublicExponent.SMALLEST,
+							new Callback<KeyPair, Void>() {
 
-				final Label keyPairMessage = speak("Generating key pair", Position.LEFT);
-				AsymmetricCipher.Factory.generateKeyPairAsync(KeyPair.KeyStrength.WEAKEST, PublicExponent.SMALLEST,
-						new Callback<KeyPair, Void>() {
-
-					@Override
-					public void onFailure(Void reason) {
-						keyPairMessage.setText(keyPairMessage.getText() + "failed");
-					}
-
-					@Override
-					public void onSuccess(KeyPair result) {
-						keyPairMessage.setText(keyPairMessage.getText() + "done");
-						speak("Public key: " + result.getPublicKey().getEncodedKey(), Position.LEFT);
-						speak("Private key: " + result.getPrivateKey().getEncodedKey(), Position.LEFT);
-						AsymmetricCipher cipher = AsymmetricCipher.Factory.createCipher(AsymmetricCipher.MessageFormat.SOAEP);
-						try {
-							byte[] encrypted = cipher.encrypt(result.getPublicKey(), "Plain Text".getBytes("UTF-8"));
-							speak("Encrypted: " + Arrays.toString(encrypted), Position.LEFT);
-							speak("Decrypted: " + new String(cipher.decrypt(result.getPrivateKey(), encrypted)), Position.LEFT);
-						} catch (UnsupportedEncodingException e) {
-							e.printStackTrace();
+						@Override
+						public void onFailure(Void reason) {
+							keyPairMessage.setText(keyPairMessage.getText() + "failed");
 						}
-					}
 
-				}, new Callback<Integer, Void>() {
+						@Override
+						public void onSuccess(KeyPair result) {
+							keyPairMessage.setText(keyPairMessage.getText() + "done");
+							Anchor link = new Anchor("Use your new key pair");
+							link.setHref(com.google.gwt.core.client.GWT.getHostPageBaseURL() + "?priv="
+									+ URL.encodePathSegment(result.getPrivateKey().getEncodedKey()) + "&pub="
+									+ URL.encodePathSegment(result.getPublicKey().getEncodedKey()));
+							speak(link, Position.LEFT);
+							speak(result.getPublicKey(), "Public key: ", Position.LEFT);
+							speak(result.getPrivateKey(), "Private key: ", Position.LEFT);
+							beginClientSession(result);
+						}
+
+					}, new Callback<Integer, Void>() {
+						@Override
+						public void onFailure(Void reason) {
+							throw new RuntimeException();
+						}
+
+						@Override
+						public void onSuccess(Integer progress) {
+							if (progress % 500 == 0) {
+								keyPairMessage.setText(keyPairMessage.getText() + ".");
+							}
+						}
+					});
+				}
+
+			}
+		});
+	}
+
+	private void beginClientSession(final KeyPair keyPair) {
+		clientSession = new ClientSession(keyPair, asList(keyPair.getPublicKey()));
+
+		speak(createInvitePanel(keyPair), Position.LEFT);
+		// speak(importPublicKeyPanel(), Position.LEFT);
+
+		GWT.log("starting client session");
+		clientSession.start(new InvitationCallback() {
+			@Override
+			public void handleInvitation(final ConversationSession conversation) {
+				GWT.log("Got invited to " + conversation.getId());
+				Main.this.conversationSession = conversation;
+				conversation.start(new MessageCallback() {
 
 					@Override
-					public void onFailure(Void reason) {
-						// TODO Auto-generated method stub
-
-					}
-
-					@Override
-					public void onSuccess(Integer progress) {
-						if (progress % 500 == 0) {
-							keyPairMessage.setText(keyPairMessage.getText() + ".");
+					public void handleReceivedMessage(Message message, byte[] content) {
+						try {
+							String messageString = new String(content, "UTF-8");
+							if (conversation.isSender(message.getSenderId())) {
+								speak(messageString, Position.RIGHT);
+							} else {
+								speak(messageString, Position.LEFT);
+							}
+						} catch (UnsupportedEncodingException e) {
+							throw new IllegalStateException(e);
 						}
 					}
 				});
-
-				// factory.generateKeyPairAsync(KeyStrength.MEDIUM,
-				// PublicExponent.SMALLEST,
-				// new Callback<RsaKeyPair, Exception>() {
-				// @Override
-				// public void onSuccess(RsaKeyPair result) {
-				// welcomeLabel.setText(welcomeLabel.getText() + "done");
-				// speak(new Anchor(
-				// "Use generated key pair for encryption / decryption",
-				// "titaniumcore/encryption.html?pu="
-				// + result.getEncodedPublicKey() + "&pr=" +
-				// result.getEncodedPrivateKey() + "",
-				// "_blank"), Position.LEFT);
-				// GWT.log("private key=" + result.getEncodedPrivateKey());
-				// GWT.log("public key=" + result.getEncodedPublicKey());
-				// GWT.log("max private key encrypt size=" +
-				// result.getEncryptMaxSize(RsaKeyPair.KeyType.PRIVATE));
-				// GWT.log("max public key encrypt size=" +
-				// result.getEncryptMaxSize(RsaKeyPair.KeyType.PUBLIC));
-				// speak("Encrypting \"Plain Text\" with generated public key.",
-				// Position.LEFT);
-				// try {
-				// byte[] encrypted = result.encrypt(RsaKeyPair.KeyType.PUBLIC,
-				// "Plain Text".getBytes("UTF-8"));
-				// speak("Encrypted result: " + Arrays.toString(encrypted),
-				// Position.LEFT);
-				// GWT.log("Encrypted: " + Arrays.toString(encrypted));
-				// speak("Decrypting with generated private key.",
-				// Position.LEFT);
-				// GWT.log(new String(result.decrypt(RsaKeyPair.KeyType.PRIVATE,
-				// encrypted), "UTF-8"));
-				// speak("Decrypted result: "
-				// + new String(result.decrypt(RsaKeyPair.KeyType.PRIVATE,
-				// encrypted), "UTF-8"),
-				// Position.LEFT);
-				//
-				// } catch (UnsupportedEncodingException e) {
-				// e.printStackTrace();
-				// }
-				//
-				// speak("Generating AES session key.", Position.LEFT);
-				// SecretKey aesKey =
-				// SymmetricCipher.Factory.generateSecretKey(SecretKey.KeyStrength.STRONGEST);
-				// SymmetricCipher aesCipher =
-				// SymmetricCipher.Factory.createCipher(Algorithm.RIJNDAEL,
-				// BlockCipherMode.ECB,
-				// Padding.PKCS7);
-				// speak("Encrypting \"Plain Text\" with generated AES key.",
-				// Position.LEFT);
-				// try {
-				// byte[] encrypted = aesCipher.encrypt(aesKey, "Plain
-				// Text".getBytes("UTF-8"));
-				// speak("Encrypted result: " + Arrays.toString(encrypted),
-				// Position.LEFT);
-				// speak("Decrypting with generated AES key.", Position.LEFT);
-				// speak("Decrypted result: " + new
-				// String(aesCipher.decrypt(aesKey, encrypted), "UTF-8"),
-				// Position.LEFT);
-				// } catch (UnsupportedEncodingException e) {
-				// e.printStackTrace();
-				// }
-				//
-				// }
-				//
-				// @Override
-				// public void onFailure(Exception reason) {
-				// welcomeLabel.setText(welcomeLabel.getText() + "failed");
-				// }
-				// }, new Callback<Integer, Void>() {
-				// @Override
-				// public void onFailure(Void reason) {
-				// }
-				//
-				// @Override
-				// public void onSuccess(Integer progress) {
-				// // GWT.log("progressing, state=" +
-				// // generator.getState());
-				// if (progress % 500 == 0) {
-				// welcomeLabel.setText(welcomeLabel.getText() + ".");
-				// }
-				// }
-				// });
 			}
 		});
-
 	}
 
-	// protected ConversationService createConversationsService() {
-	// return new ConversationService() {
-	//
-	// private List<Conversation> conversations = new ArrayList<Conversation>();
-	// private RsaKeyPair keyPair;
-	//
-	// {
-	// conversations.add(new Conversation() {
-	//
-	// private List<Participant> participants = new
-	// ArrayList<ConversationService.Participant>();
-	// private List<Message> messages = new
-	// ArrayList<ConversationService.Message>();
-	// private Map<String, byte[]> encryptedKeysById = new HashMap<String,
-	// byte[]>();
-	//
-	// {
-	// participants.add(new Participant() {
-	//
+	private FlowPanel createInvitePanel(final KeyPair keyPair) {
+		FlowPanel invitePanel = new FlowPanel();
+		invitePanel.add(new Label("Invite: "));
+		final TextBox publicKeyTextBox = new TextBox();
+		publicKeyTextBox.getElement().setAttribute("placeholder", "Public Key");
+		invitePanel.add(publicKeyTextBox);
+		publicKeyTextBox.addKeyUpHandler(new KeyUpHandler() {
+			@Override
+			public void onKeyUp(KeyUpEvent event) {
+				if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER && !publicKeyTextBox.getText().isEmpty()) {
+					PublicKey publicKey = AsymmetricCipher.Factory.createPublicKey(publicKeyTextBox.getText());
+					GWT.log("Inviting " + publicKey.getId());
+					conversationSession = clientSession.beginConversation(asList(keyPair.getPublicKey().getId()));
+					conversationSession.invite(publicKey);
+				}
+			}
+		});
+		return invitePanel;
+	}
+
+	// private FlowPanel importPublicKeyPanel() {
+	// FlowPanel invitePanel = new FlowPanel();
+	// invitePanel.add(new Label("Import: "));
+	// final TextBox publicKeyTextBox = new TextBox();
+	// publicKeyTextBox.getElement().setAttribute("placeholder", "Public Key");
+	// invitePanel.add(publicKeyTextBox);
+	// publicKeyTextBox.addKeyUpHandler(new KeyUpHandler() {
 	// @Override
-	// public String getScreenName() {
-	// return "Test Participant";
-	// }
-	//
-	// @Override
-	// public byte[] getPublicKey() {
-	// // TODO Auto-generated method stub
-	// return null;
-	// }
-	//
-	// @Override
-	// public String getId() {
-	// // TODO Auto-generated method stub
-	// return null;
-	// }
-	// });
-	//
-	// messages.add(new Message() {
-	//
-	// private String keyId = "testKeyId";
-	// private byte[] encryptedContent;
-	//
-	// @Override
-	// public Date getTimestamp() {
-	// return new Date();
-	// }
-	//
-	// @Override
-	// public Participant getSender() {
-	// return getParticipants().iterator().next();
-	// }
-	//
-	// @Override
-	// public String getContent() {
-	// try {
-	// return new String(getCipherById(keyId).decrypt(encryptedContent),
-	// "UTF-8");
-	// } catch (UnsupportedEncodingException e) {
-	// return e.getMessage();
+	// public void onKeyUp(KeyUpEvent event) {
+	// if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER &&
+	// !publicKeyTextBox.getText().isEmpty()) {
+	// PublicKey publicKey =
+	// AsymmetricCipher.Factory.createPublicKey(publicKeyTextBox.getText());
+	// GWT.log("Importing " + publicKey.getId());
+	// clientSession.importPublicKey(publicKey);
 	// }
 	// }
 	// });
-	// }
-	//
-	// protected Cipher getCipherById(String keyId) {
-	// byte[] decryptedKey = keyPair.decrypt(KeyType.PRIVATE,
-	// encryptedKeysById.get(keyId));
-	// return new CipherFactory().create(Algorithm.RIJNDAEL, decryptedKey,
-	// BlockCipherMode.ECB,
-	// Padding.PKCS7);
-	// }
-	//
-	// @Override
-	// public void sendMessage(String message) {
-	// // TODO Auto-generated method stub
-	//
-	// }
-	//
-	// @Override
-	// public List<Message> receiveNewMessages() {
-	// // TODO Auto-generated method stub
-	// return null;
-	// }
-	//
-	// @Override
-	// public List<Participant> getParticipants() {
-	// return participants;
-	// }
-	//
-	// @Override
-	// public String getId() {
-	// // TODO Auto-generated method stub
-	// return null;
-	// }
-	//
-	// @Override
-	// public List<Message> getAllMessages() {
-	// return messages;
-	// }
-	// });
-	// }
-	//
-	// @Override
-	// public void login(RsaKeyPair keyPair) {
-	// this.keyPair = keyPair;
-	// }
-	//
-	// @Override
-	// public List<Conversation> getConversations() {
-	// return conversations;
-	// }
-	// };
+	// return invitePanel;
 	// }
 
 }
