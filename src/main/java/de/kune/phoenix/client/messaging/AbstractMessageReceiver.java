@@ -1,5 +1,6 @@
 package de.kune.phoenix.client.messaging;
 
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,6 +8,7 @@ import org.fusesource.restygwt.client.Method;
 import org.fusesource.restygwt.client.MethodCallback;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Timer;
 
 import de.kune.phoenix.client.crypto.KeyStore;
@@ -97,7 +99,7 @@ public abstract class AbstractMessageReceiver {
 			if (conversationId == null) {
 				messageService.get(true, lastTransmission, receiverId, messageHandler);
 			} else {
-				messageService.getFromConversation(conversationId, true, lastTransmission, receiverId, messageHandler);
+				messageService.getFromConversation(URL.encodePathSegment(conversationId), true, lastTransmission, receiverId, messageHandler);
 			}
 		}
 	};

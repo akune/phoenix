@@ -14,6 +14,7 @@ import org.fusesource.restygwt.client.Method;
 import org.fusesource.restygwt.client.MethodCallback;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.http.client.URL;
 
 import de.kune.phoenix.client.crypto.AsymmetricCipher;
 import de.kune.phoenix.client.crypto.KeyPair;
@@ -104,7 +105,7 @@ public class ConversationSession {
 		message.setAndEncryptContent(secretKey, conversationKeyStore.getPublicKey(participantId).getPlainKey());
 		message.setTimestamp(new Date());
 		message.sign(sessionKeyPair.getPrivateKey());
-		messageService.postToConversation(getId(), message, new MethodCallback<Void>() {
+		messageService.postToConversation(URL.encodePathSegment(getId()), message, new MethodCallback<Void>() {
 			@Override
 			public void onFailure(Method method, Throwable exception) {
 			}
@@ -152,7 +153,7 @@ public class ConversationSession {
 		message.setKeyId(key.getId());
 		message.setTimestamp(new Date());
 		message.sign(sessionKeyPair.getPrivateKey());
-		messageService.postToConversation(conversationId, message, new MethodCallback<Void>() {
+		messageService.postToConversation(URL.encodePathSegment(conversationId), message, new MethodCallback<Void>() {
 			@Override
 			public void onSuccess(Method method, Void response) {
 				// TODO Auto-generated method stub
@@ -175,17 +176,18 @@ public class ConversationSession {
 		keyMessage.setTimestamp(new Date());
 		keyMessage.sign(sessionKeyPair.getPrivateKey());
 		GWT.log("sending secret key message to <" + conversationId + ">: " + keyMessage);
-		messageService.postToConversation(conversationId, keyMessage, new MethodCallback<Void>() {
-			@Override
-			public void onSuccess(Method method, Void response) {
-				// TODO Auto-generated method stub
-			}
+		messageService.postToConversation(URL.encodePathSegment(conversationId), keyMessage,
+				new MethodCallback<Void>() {
+					@Override
+					public void onSuccess(Method method, Void response) {
+						// TODO Auto-generated method stub
+					}
 
-			@Override
-			public void onFailure(Method method, Throwable exception) {
-				// TODO Auto-generated method stub
-			}
-		});
+					@Override
+					public void onFailure(Method method, Throwable exception) {
+						// TODO Auto-generated method stub
+					}
+				});
 	}
 
 	private void handleIncomingMessage(Message message, byte[] content) {
