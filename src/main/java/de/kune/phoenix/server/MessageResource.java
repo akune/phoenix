@@ -17,8 +17,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.apache.commons.lang3.ArrayUtils;
-
 import de.kune.phoenix.shared.Message;
 
 @Path("/")
@@ -77,13 +75,22 @@ public class MessageResource {
 			for (Message m : container) {
 				if (transmittedAfter == null || m.getTransmission().compareTo(transmittedAfter) > 0) {
 					if (recipientId == null || m.getRecipientIds() == null
-							|| ArrayUtils.contains(m.getRecipientIds(), recipientId)) {
+							|| contains(m.getRecipientIds(), recipientId)) {
 						result.add(m);
 					}
 				}
 			}
 		}
 		return result;
+	}
+
+	private boolean contains(String[] recipientIds, String recipientId) {
+		for (String item : recipientIds) {
+			if (item.equals(recipientId)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private void waitForNewMessages() {
