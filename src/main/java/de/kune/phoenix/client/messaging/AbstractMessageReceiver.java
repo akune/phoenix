@@ -1,6 +1,5 @@
 package de.kune.phoenix.client.messaging;
 
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,7 +41,7 @@ public abstract class AbstractMessageReceiver {
 							throw new RuntimeException(e);
 						}
 					}
-					messageReceiverTimer.schedule(100);
+					messageReceiverTimer.schedule(1000);
 				}
 
 				private List<Message> keyMessagesFirst(List<Message> response) {
@@ -97,9 +96,9 @@ public abstract class AbstractMessageReceiver {
 				}
 			};
 			if (conversationId == null) {
-				messageService.get(true, lastTransmission, receiverId, messageHandler);
+				messageService.get(false, lastTransmission, receiverId, messageHandler);
 			} else {
-				messageService.getFromConversation(URL.encodePathSegment(conversationId), true, lastTransmission, receiverId, messageHandler);
+				messageService.getFromConversation(URL.encodePathSegment(conversationId), false, lastTransmission, receiverId, messageHandler);
 			}
 		}
 	};

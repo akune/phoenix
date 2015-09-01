@@ -2,6 +2,7 @@ package de.kune.phoenix.shared;
 
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Random;
 
 import de.kune.phoenix.client.crypto.AsymmetricCipher;
 import de.kune.phoenix.client.crypto.Cipher;
@@ -39,6 +40,10 @@ public class Message {
 	}
 
 	/**
+	 * The id of this message.
+	 */
+	private String id;
+	/**
 	 * The id of the sender of this message.
 	 */
 	private String senderId;
@@ -71,6 +76,20 @@ public class Message {
 	 * server node.
 	 */
 	private Date transmission;
+
+	public Message() {
+		Random random = new Random();
+		this.id = Long.toString(random.nextLong()) + Long.toString(random.nextLong()) + Long.toString(random.nextLong())
+				+ Long.toString(random.nextLong()) + Long.toString(System.currentTimeMillis());
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
 
 	public String getSenderId() {
 		return senderId;
@@ -167,31 +186,35 @@ public class Message {
 	}
 
 	private byte[] createDigest(byte[] salt) {
-//		GWT.log("digesting...");
+		// GWT.log("digesting...");
 		Digest d = new Sha256();
-//		GWT.log("...salting: " + Arrays.toString(salt));
+		// GWT.log("...salting: " + Arrays.toString(salt));
 		d = d.feed(salt);
+		if (getId() != null) {
+			d = d.feed(getId());
+		}
 		if (getContent() != null) {
-//			GWT.log("...content: " + Arrays.toString(content));
+			// GWT.log("...content: " + Arrays.toString(content));
 			d = d.feed(getContent());
 		}
-//		GWT.log("...timestamp: " + timestamp == null ? "" : Long.toString(timestamp.getTime()));
+		// GWT.log("...timestamp: " + timestamp == null ? "" :
+		// Long.toString(timestamp.getTime()));
 		d = d.feed(timestamp == null ? "" : Long.toString(timestamp.getTime()));
 		if (getKeyId() != null) {
 			d = d.feed(getKeyId());
 		}
 		if (getSenderId() != null) {
-//			GWT.log("...sender: " + getSenderId());
+			// GWT.log("...sender: " + getSenderId());
 			d = d.feed(getSenderId());
 		}
 		if (recipientIds != null) {
 			for (String recipientId : getRecipientIds()) {
-//				GWT.log("...recipient: " + recipientId);
+				// GWT.log("...recipient: " + recipientId);
 				d = d.feed(recipientId);
 			}
 		}
 		if (getMessageType() != null) {
-//			GWT.log("...message type: " + messageType.name());
+			// GWT.log("...message type: " + messageType.name());
 			d = d.feed(messageType.name());
 		}
 		return d.iterate(15).toByteArray(salt);
@@ -217,9 +240,10 @@ public class Message {
 
 	@Override
 	public String toString() {
-		return "Message [senderId=" + senderId + ", recipientIds=" + Arrays.toString(recipientIds) + ", keyId=" + keyId
-				+ ", messageType=" + messageType + ", content=" + Base64Utils.encode(content) + ", timestamp=" + timestamp
-				+ ", signature=" + Base64Utils.encode(signature) + ", transmission=" + transmission + "]";
+		return "Message [id=" + id + ", senderId=" + senderId + ", recipientIds=" + Arrays.toString(recipientIds)
+				+ ", keyId=" + keyId + ", messageType=" + messageType + ", content=" + Base64Utils.encode(content)
+				+ ", timestamp=" + timestamp + ", signature=" + Base64Utils.encode(signature) + ", transmission="
+				+ transmission + "]";
 	}
 
 }
