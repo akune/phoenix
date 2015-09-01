@@ -4,14 +4,14 @@ import java.util.function.Predicate;
 
 import org.junit.Test;
 
-import de.kune.phoenix.server.MessageResource.ObjectStore;
+import de.kune.phoenix.server.MessageResource.DefaultObjectStore;
 
 public class ObjectStoreTest {
 
 	@Test
 	public void singleThreadAccess() {
 		final Long reference = System.currentTimeMillis();
-		final ObjectStore<Long> store = new ObjectStore<Long>();
+		final ObjectStore<Long> store = new DefaultObjectStore<Long>();
 		new Thread() {
 			public void run() {
 				try {
@@ -33,7 +33,7 @@ public class ObjectStoreTest {
 	@Test
 	public void multipleThreadAccess() {
 		final Long reference = 0L;
-		final ObjectStore<Long> store = new ObjectStore<Long>();
+		final ObjectStore<Long> store = new DefaultObjectStore<Long>();
 		for (int i = 0; i < 500; i++) {
 			final Long number = (long) i;
 			new Thread() {

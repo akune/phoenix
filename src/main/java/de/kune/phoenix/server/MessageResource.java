@@ -1,8 +1,10 @@
 package de.kune.phoenix.server;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -27,27 +29,32 @@ import de.kune.phoenix.shared.Message;
 @Path("/")
 public class MessageResource {
 
-	public static class ObjectStore<T> {
-		private Set<T> messages = new LinkedHashSet<T>();
-		private ReadWriteLock lock = new ReentrantReadWriteLock();
-		private Condition messageAdded = lock.writeLock().newCondition();
+	public static class DefaultObjectStore<T> implements ObjectStore<T> {
+		private Set<T> objects = new LinkedHashSet<T>();
+		private ReadWriteLock objectsLock = new ReentrantReadWriteLock();
+		private Condition objectAdded = objectsLock.writeLock().newCondition();
+		private ReadWriteLock listenersLock = new ReentrantReadWriteLock();
+		private ConcurrentMap<Predicate<T>, Set<ObjectStoreListener<T>>> listeners = new ConcurrentHashMap<Predicate<T>, Set<ObjectStoreListener<T>>>();
 
-		public void add(T message) {
-			lock.writeLock().lock();
+		@Override
+		public void add(T object) {
+			objectsLock.writeLock().lock();
 			try {
-				messages.add(message);
-				messageAdded.signalAll();
+				objects.add(object);
+				objectAdded.signalAll();
+				invokeObjectAddedListeners(object);
 			} finally {
-				lock.writeLock().unlock();
+				objectsLock.writeLock().unlock();
 			}
 		}
 
+		@Override
 		public Set<T> get() {
-			lock.readLock().lock();
+			objectsLock.readLock().lock();
 			try {
-				return new LinkedHashSet<T>(messages);
+				return new LinkedHashSet<T>(objects);
 			} finally {
-				lock.readLock().unlock();
+				objectsLock.readLock().unlock();
 			}
 		}
 
@@ -60,19 +67,21 @@ public class MessageResource {
 			return false;
 		}
 
+		@Override
 		public Set<T> await(Predicate<T> predicate) {
-			lock.writeLock().lock();
+			objectsLock.writeLock().lock();
 			try {
 				while (!anyMessage(predicate)) {
-					messageAdded.awaitUninterruptibly();
+					objectAdded.awaitUninterruptibly();
 				}
 				return get(predicate);
 			} finally {
-				lock.writeLock().unlock();
+				objectsLock.writeLock().unlock();
 			}
 
 		}
 
+		@Override
 		public Set<T> get(Predicate<T> predicate) {
 			Set<T> result = get();
 			for (Iterator<T> it = result.iterator(); it.hasNext();) {
@@ -83,18 +92,78 @@ public class MessageResource {
 			return result;
 		}
 
+		@Override
+		public void remove(Predicate<T> predicate) {
+			objectsLock.writeLock().lock();
+			for (Iterator<T> it = objects.iterator(); it.hasNext();) {
+				if (predicate.test(it.next())) {
+					it.remove();
+				}
+			}
+			objectsLock.writeLock().unlock();
+		}
+
+		@Override
+		public void remove(T object) {
+			objectsLock.writeLock().lock();
+			objects.remove(object);
+			objectsLock.writeLock().unlock();
+		}
+
+		@Override
 		public void clear() {
-			lock.writeLock().lock();
+			objectsLock.writeLock().lock();
 			try {
-				messages.clear();
+				objects.clear();
 			} finally {
-				lock.writeLock().unlock();
+				objectsLock.writeLock().unlock();
+			}
+		}
+
+		private void invokeObjectAddedListeners(T object) {
+			listenersLock.readLock().lock();
+			try {
+				for (Entry<Predicate<T>, Set<ObjectStoreListener<T>>> e : listeners.entrySet()) {
+					if (e.getKey().test(object)) {
+						for (ObjectStoreListener<T> l : e.getValue()) {
+							l.added(object);
+						}
+					}
+				}
+			} finally {
+				listenersLock.readLock().unlock();
+			}
+		}
+
+		@Override
+		public void addListener(Predicate<T> predicate, ObjectStoreListener<T> listener) {
+			listenersLock.writeLock().lock();
+			try {
+				listeners.putIfAbsent(predicate, new HashSet<ObjectStoreListener<T>>()).add(listener);
+			} finally {
+				listenersLock.writeLock().unlock();
+			}
+		}
+
+		@Override
+		public void removeListener(Predicate<T> predicate, ObjectStoreListener<T> listener) {
+			listenersLock.writeLock().lock();
+			try {
+				Set<ObjectStoreListener<T>> l = listeners.get(predicate);
+				if (l != null) {
+					l.remove(listener);
+					if (l.isEmpty()) {
+						listeners.remove(predicate);
+					}
+				}
+			} finally {
+				listenersLock.writeLock().unlock();
 			}
 		}
 	}
 
 	private static final String GENERAL = "general";
-	private static final ConcurrentMap<String, ObjectStore<Message>> conversations = new ConcurrentHashMap<String, ObjectStore<Message>>();
+	private static final ConcurrentMap<String, DefaultObjectStore<Message>> conversations = new ConcurrentHashMap<String, DefaultObjectStore<Message>>();
 
 	@POST
 	@Path("message")
@@ -105,10 +174,10 @@ public class MessageResource {
 		return Response.status(200).build();
 	}
 
-	private ObjectStore<Message> getConversation(String conversationId) {
-		ObjectStore<Message> result = conversations.get(conversationId);
+	private DefaultObjectStore<Message> getConversation(String conversationId) {
+		DefaultObjectStore<Message> result = conversations.get(conversationId);
 		if (result == null) {
-			conversations.putIfAbsent(conversationId, new ObjectStore<Message>());
+			conversations.putIfAbsent(conversationId, new DefaultObjectStore<Message>());
 			return conversations.get(conversationId);
 		} else {
 			return result;
@@ -183,7 +252,7 @@ public class MessageResource {
 	@Path("conversation/{conversation}/message")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response postToConversation(@PathParam("conversation") String conversationId, Message message) {
-		ObjectStore<Message> conversation = getConversation(conversationId);
+		DefaultObjectStore<Message> conversation = getConversation(conversationId);
 		message.setTransmission(new Date());
 		conversation.add(message);
 		return Response.status(200).build();
