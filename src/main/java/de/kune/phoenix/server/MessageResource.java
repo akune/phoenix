@@ -163,25 +163,29 @@ public class MessageResource {
 	}
 
 	private static final String GENERAL = "general";
-	private static final ConcurrentMap<String, DefaultObjectStore<Message>> conversations = new ConcurrentHashMap<String, DefaultObjectStore<Message>>();
+
+	private static class ConversationsStore {
+		private final ConcurrentMap<String, DefaultObjectStore<Message>> conversations = new ConcurrentHashMap<String, DefaultObjectStore<Message>>();
+
+		public ObjectStore<Message> getConversation(String conversationId) {
+			ObjectStore<Message> result = conversations.get(conversationId);
+			if (result == null) {
+				return conversations.putIfAbsent(conversationId, new DefaultObjectStore<Message>());
+			} else {
+				return result;
+			}
+		}
+	}
+
+	private static final ConversationsStore conversations = new ConversationsStore();
 
 	@POST
 	@Path("message")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response post(Message message) {
 		message.setTransmission(new Date());
-		getConversation(GENERAL).add(message);
+		conversations.getConversation(GENERAL).add(message);
 		return Response.status(200).build();
-	}
-
-	private DefaultObjectStore<Message> getConversation(String conversationId) {
-		DefaultObjectStore<Message> result = conversations.get(conversationId);
-		if (result == null) {
-			conversations.putIfAbsent(conversationId, new DefaultObjectStore<Message>());
-			return conversations.get(conversationId);
-		} else {
-			return result;
-		}
 	}
 
 	@GET
@@ -190,11 +194,13 @@ public class MessageResource {
 	public Response get(@QueryParam("wait") boolean wait, @QueryParam("transmitted-after") Long transmittedAfter,
 			@QueryParam("recipient-id") String recipientId) {
 		if (wait) {
-			return Response.status(200)
-					.entity(getConversation(GENERAL).await(predicate(recipientId, toDate(transmittedAfter)))).build();
+			return Response.status(200).entity(
+					conversations.getConversation(GENERAL).await(predicate(recipientId, toDate(transmittedAfter))))
+					.build();
 		} else {
-			return Response.status(200)
-					.entity(getConversation(GENERAL).get(predicate(recipientId, toDate(transmittedAfter)))).build();
+			return Response.status(200).entity(
+					conversations.getConversation(GENERAL).get(predicate(recipientId, toDate(transmittedAfter))))
+					.build();
 		}
 	}
 
@@ -210,8 +216,8 @@ public class MessageResource {
 	@DELETE
 	@Path("message")
 	public Response clear() {
-		synchronized (getConversation(GENERAL)) {
-			getConversation(GENERAL).clear();
+		synchronized (conversations.getConversation(GENERAL)) {
+			conversations.getConversation(GENERAL).clear();
 		}
 		return Response.status(200).build();
 	}
@@ -223,12 +229,11 @@ public class MessageResource {
 			@QueryParam("wait") boolean wait, @QueryParam("transmitted-after") Long transmittedAfter,
 			@QueryParam("recipient-id") String recipientId) {
 		if (wait) {
-			return Response.status(200)
-					.entity(getConversation(conversationId).await(predicate(recipientId, toDate(transmittedAfter))))
-					.build();
+			return Response.status(200).entity(conversations.getConversation(conversationId)
+					.await(predicate(recipientId, toDate(transmittedAfter)))).build();
 		} else {
-			return Response.status(200)
-					.entity(getConversation(conversationId).get(predicate(recipientId, toDate(transmittedAfter))))
+			return Response.status(200).entity(
+					conversations.getConversation(conversationId).get(predicate(recipientId, toDate(transmittedAfter))))
 					.build();
 		}
 	}
@@ -252,7 +257,7 @@ public class MessageResource {
 	@Path("conversation/{conversation}/message")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response postToConversation(@PathParam("conversation") String conversationId, Message message) {
-		DefaultObjectStore<Message> conversation = getConversation(conversationId);
+		ObjectStore<Message> conversation = conversations.getConversation(conversationId);
 		message.setTransmission(new Date());
 		conversation.add(message);
 		return Response.status(200).build();

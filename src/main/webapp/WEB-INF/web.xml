@@ -17,8 +17,17 @@
       <param-value>true</param-value>
     </init-param>
   </servlet>
+  
+  <servlet>
+    <servlet-name>Event Source Servlet</servlet-name>
+    <servlet-class>de.kune.phoenix.server.EventSourceServlet</servlet-class>
+  </servlet>
   <servlet-mapping>
     <servlet-name>Jersey Web Application</servlet-name>
     <url-pattern>/api/*</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>Event Source Servlet</servlet-name>
+    <url-pattern>/es/*</url-pattern>
   </servlet-mapping>
 </web-app>

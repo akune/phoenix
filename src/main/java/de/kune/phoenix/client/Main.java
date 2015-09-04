@@ -9,8 +9,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.fusesource.restygwt.client.Defaults;
-
 import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.shared.GWT;
@@ -41,6 +39,9 @@ import de.kune.phoenix.client.messaging.ClientSession;
 import de.kune.phoenix.client.messaging.ConversationSession;
 import de.kune.phoenix.client.messaging.InvitationCallback;
 import de.kune.phoenix.client.messaging.MessageCallback;
+import de.kune.phoenix.client.messaging.MessageService;
+import de.kune.phoenix.client.messaging.MessageService.EventSource;
+import de.kune.phoenix.client.messaging.MessageService.EventSource.EventSourceHandler;
 import de.kune.phoenix.shared.Message;
 
 public class Main implements EntryPoint {
@@ -92,9 +93,49 @@ public class Main implements EntryPoint {
 	}
 
 	public void onModuleLoad() {
-		Defaults.setServiceRoot(com.google.gwt.core.client.GWT.getModuleBaseURL()
-				.replace(com.google.gwt.core.client.GWT.getModuleName() + "/", "") + "api");
-		Defaults.setDateFormat(null);
+		MessageService.EventSource.connect("http://localhost:8888/es", new EventSourceHandler() {
+			@Override
+			public void handleOpen(EventSource es) {
+				GWT.log("ES open");
+			}
+			@Override
+			public void handleMessage(EventSource es, String message) {
+				GWT.log("Received ES message: " + message);
+			}
+			@Override
+			public void handleClose(EventSource es) {
+				GWT.log("ES closed");
+			}
+			@Override
+			public void handleError(EventSource es, String message) {
+				GWT.log("ES error: " + message);
+			}
+		});
+		// MessageService.WebSocket.connect("ws://echo.websocket.org/", new
+		// WebSocketHandler() {
+		//
+		// @Override
+		// public void handleOpen(WebSocket ws) {
+		// GWT.log("connected to " + ws + ", state: " + ws.getState());
+		// ws.send("Hello Mr. Echo Service!");
+		// }
+		//
+		// @Override
+		// public void handleMessage(WebSocket ws, String message) {
+		// GWT.log("Received WS message: " + message);
+		// }
+		//
+		// @Override
+		// public void handleClose(WebSocket ws) {
+		// GWT.log("Closed " + ws);
+		// }
+		//
+		// @Override
+		// public void handleError(WebSocket ws, String message) {
+		// GWT.log("Error: " + message);
+		// }
+		//
+		// });
 
 		mainPanel = new FlowPanel();
 		mainPanel.setStyleName("phoenix container");
@@ -102,7 +143,7 @@ public class Main implements EntryPoint {
 		avatarPanel = new FlowPanel();
 		avatarPanel.setStyleName("avatar-panel");
 		mainPanel.add(avatarPanel);
-		getConversationAvatarPanel("system");
+		getConversationAvatarPanel("system").addStyleName("selected");
 		speakPanel = new FlowPanel();
 		speakPanel.setStyleName("speak-panel");
 		mainPanel.add(speakPanel);
@@ -112,6 +153,7 @@ public class Main implements EntryPoint {
 		mainPanel.add(phoenixAvatar);
 
 		TextBox speakBox = new TextBox();
+		speakBox.getElement().setAttribute("placeholder", "Message");
 		speakPanel.add(speakBox);
 		speakBox.addKeyUpHandler(new KeyUpHandler() {
 
@@ -201,7 +243,7 @@ public class Main implements EntryPoint {
 		}
 		return chatPanel;
 	}
-	
+
 	private Map<String, ConversationSession> conversationSessions = new HashMap<String, ConversationSession>();
 
 	private void beginClientSession(final KeyPair keyPair) {
@@ -220,7 +262,7 @@ public class Main implements EntryPoint {
 				chatPanel.setVisible(false);
 
 				conversationSessions.put(conversation.getId(), conversation);
-				
+
 				conversation.start(new MessageCallback() {
 
 					@Override
@@ -252,21 +294,26 @@ public class Main implements EntryPoint {
 		if (conversationPanel == null) {
 			conversationPanel = new FlowPanel();
 			conversationPanel.getElement().setClassName("conversation");
-			conversationPanel.add(new Image("http://www.gravatar.com/avatar/ef11f4d918bcb95c61ac900db78d080f"));
-			conversationPanel.add(new Label("conversation"));
+			if (conversationId.equals("system")) {
+				conversationPanel.add(new Image("img/phoenix-avatar.png"));
+				conversationPanel.add(new Label("Phoenix"));
+			} else {
+				conversationPanel.add(new Image("http://www.gravatar.com/avatar/ef11f4d918bcb95c61ac900db78d080f"));
+				conversationPanel.add(new Label("Unknown"));
+			}
 			avatarPanel.add(conversationPanel);
 			conversationAvatarPanels.put(conversationId, conversationPanel);
 			conversationPanel.addDomHandler(new ClickHandler() {
 				@Override
 				public void onClick(ClickEvent event) {
-					for (Entry<String, Panel> e: conversationAvatarPanels.entrySet()) {
+					for (Entry<String, Panel> e : conversationAvatarPanels.entrySet()) {
 						if (e.getKey().equals(conversationId)) {
 							e.getValue().addStyleName("selected");
 						} else {
 							e.getValue().removeStyleName("selected");
 						}
 					}
-					for (Entry<String, Panel> e: chatPanels.entrySet()) {
+					for (Entry<String, Panel> e : chatPanels.entrySet()) {
 						if (e.getKey().equals(conversationId)) {
 							e.getValue().setVisible(true);
 						} else {
@@ -274,7 +321,8 @@ public class Main implements EntryPoint {
 						}
 					}
 					selectedConversationSession = conversationSessions.get(conversationId);
-					GWT.log("Current conversation: " + selectedConversationSession.getId());
+					// GWT.log("Current conversation: " +
+					// selectedConversationSession.getId());
 				}
 			}, ClickEvent.getType());
 		}
@@ -293,7 +341,8 @@ public class Main implements EntryPoint {
 				if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER && !publicKeyTextBox.getText().isEmpty()) {
 					PublicKey publicKey = AsymmetricCipher.Factory.createPublicKey(publicKeyTextBox.getText());
 					GWT.log("Inviting " + publicKey.getId());
-					selectedConversationSession = clientSession.beginConversation(asList(keyPair.getPublicKey().getId()));
+					selectedConversationSession = clientSession
+							.beginConversation(asList(keyPair.getPublicKey().getId()));
 					selectedConversationSession.invite(publicKey);
 				}
 			}

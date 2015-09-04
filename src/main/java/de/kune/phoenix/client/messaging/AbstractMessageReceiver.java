@@ -12,7 +12,6 @@ import com.google.gwt.user.client.Timer;
 
 import de.kune.phoenix.client.crypto.KeyStore;
 import de.kune.phoenix.shared.Message;
-import de.kune.phoenix.shared.MessageService;
 
 public abstract class AbstractMessageReceiver {
 
@@ -103,7 +102,7 @@ public abstract class AbstractMessageReceiver {
 		}
 	};
 
-	private final MessageService messageService = GWT.create(MessageService.class);
+	private final MessageService messageService = MessageService.instance();
 
 	private final String receiverId;
 

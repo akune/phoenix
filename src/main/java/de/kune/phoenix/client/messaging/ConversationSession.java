@@ -27,11 +27,10 @@ import de.kune.phoenix.client.crypto.util.Base64Utils;
 import de.kune.phoenix.client.crypto.util.Sha256;
 import de.kune.phoenix.shared.Message;
 import de.kune.phoenix.shared.Message.Type;
-import de.kune.phoenix.shared.MessageService;
 
 public class ConversationSession {
 
-	private final MessageService messageService = GWT.create(MessageService.class);
+	private final MessageService messageService = MessageService.instance();
 	private String conversationId;
 	private SimpleKeyStore conversationKeyStore;
 	private KeyPair sessionKeyPair;

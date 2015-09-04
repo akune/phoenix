@@ -18,11 +18,10 @@ import de.kune.phoenix.client.crypto.SimpleKeyStore;
 import de.kune.phoenix.client.crypto.util.Base64Utils;
 import de.kune.phoenix.shared.Message;
 import de.kune.phoenix.shared.Message.Type;
-import de.kune.phoenix.shared.MessageService;
 
 public class ClientSession {
 
-	private final MessageService messageService = GWT.create(MessageService.class);
+	private final MessageService messageService = MessageService.instance();
 	private final KeyPair keyPair;
 	private InvitationCallback invitationCallback;
 	private SimpleKeyStore keyStore;

@@ -16,42 +16,43 @@ img {
 }
 
 .phoenix.container {
-	position: relative;
-	margin: 0 auto;
-	width: 800px;
-	/* 	height: 600px; */
+	position: fixed;
+	top: 0px;
+	bottom: 0px;
+	left: 0px;
+	right: 0px;
 }
 
 .phoenix.container .avatar-panel {
 	width: 138px;
-	height: 600px;
-	float: left;
 	position: fixed;
 }
 
 .phoenix.container .chat-panel {
-	float: right;
-	height: 100%;
-	margin: 0 auto 10px;
+	position: fixed;
 	overflow-x: hidden;
 	overflow-y: auto;
+	left: 145px;
+	top: 0px;
+	right: 0px;
 	padding: 0 5px;
-	position: relative;
-	width: 650px;
+	bottom: 25px;
 }
 
-.phoenix.container .speak-panel input {
-	width: 550px;
-}
-
-.phoenix.container .speak-panel {
-	height: 30px;
-	left: 150px;
-	line-height: 30px;
-	margin-bottom: 0;
-	position: relative;
+div.phoenix.container div.speak-panel input {
 	width: 100%;
-	float: right;
+	border-radius: 5px;
+	border: solid 1px black;
+	line-height: 20px;
+	padding-left: 10px;
+}
+
+div.phoenix.container div.speak-panel {
+	position: fixed;
+	bottom: 0px;
+	left: 145px;
+	right: 0px;
+	padding-right: 15px;
 }
 
 .bubble {
@@ -125,14 +126,24 @@ img {
 	right: -5px;
 }
 
+.conversation.selected {
+	background-image: linear-gradient(bottom, #d2f4fe 25%, #95c2fd 100%);
+	background-image: -o-linear-gradient(bottom, #d2f4fe 25%, #95c2fd 100%);
+	background-image: -moz-linear-gradient(bottom, #d2f4fe 25%, #95c2fd 100%);
+	background-image: -webkit-linear-gradient(bottom, #d2f4fe 25%, #95c2fd 100%);
+	background-image: -ms-linear-gradient(bottom, #d2f4fe 25%, #95c2fd 100%);
+	background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0.25, #d2f4fe
+		), color-stop(1, #95c2fd));
+}
+
 .conversation {
-	background-image: linear-gradient(bottom, #ece44b 25%, #ecb047 100%);
-	background-image: -o-linear-gradient(bottom, #ece44b 25%, #ecb047 100%);
-	background-image: -moz-linear-gradient(bottom, #ece44b 25%, #ecb047 100%);
-	background-image: -webkit-linear-gradient(bottom, #ece44b 25%, #ecb047 100%);
-	background-image: -ms-linear-gradient(bottom, #ece44b 25%, #ecb047 100%);
-	background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0.25, #ece44b
-		), color-stop(1, #ecb047));
+	background-image: linear-gradient(bottom, #F7F0CB 25%, #FFF 100%);
+	background-image: -o-linear-gradient(bottom, #F7F0CB 25%, #FFF 100%);
+	background-image: -moz-linear-gradient(bottom, #F7F0CB 25%, #FFF 100%);
+	background-image: -webkit-linear-gradient(bottom, #F7F0CB 25%, #FFF 100%);
+	background-image: -ms-linear-gradient(bottom, #F7F0CB 25%, #FFF 100%);
+	background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0.25, #F7F0CB
+		), color-stop(1, #FFF));
 	border: solid 1px rgba(0, 0, 0, 0.5);
 	border-radius: 6px;
 	box-shadow: inset 0 5px 5px rgba(255, 255, 255, 0.4), 0 1px 3px
@@ -140,7 +151,6 @@ img {
 	box-sizing: border-box;
 	clear: both;
 	float: left;
-	margin-bottom: 10px;
 	padding: 0;
 	overflow: hidden;
 	position: relative;
@@ -155,7 +165,9 @@ img {
 	float: left;
 }
 
-.conversation .div {
+.conversation div {
 	float: left;
+	padding-left: 5px;
+	padding-top: 5px;
+	vertical-align: middle;
 }
-
