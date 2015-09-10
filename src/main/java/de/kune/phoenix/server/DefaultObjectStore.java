@@ -21,11 +21,11 @@ import java.util.function.Predicate;
 import de.kune.phoenix.shared.Identifiable;
 
 public class DefaultObjectStore<T extends Identifiable<I>, I> implements ObjectStore<T> {
-	private Map<I, T> objects = new LinkedHashMap<I, T>();
+	private Map<I, T> objects = new LinkedHashMap<>();
 	private ReadWriteLock objectsLock = new ReentrantReadWriteLock();
 	private Condition objectAdded = objectsLock.writeLock().newCondition();
 	private ReadWriteLock listenersLock = new ReentrantReadWriteLock();
-	private ConcurrentMap<Predicate<T>, Set<ObjectStoreListener<T>>> listeners = new ConcurrentHashMap<Predicate<T>, Set<ObjectStoreListener<T>>>();
+	private ConcurrentMap<Predicate<T>, Set<ObjectStoreListener<T>>> listeners = new ConcurrentHashMap<>();
 	private static final AtomicLong sequence = new AtomicLong(0L);
 
 	@Override

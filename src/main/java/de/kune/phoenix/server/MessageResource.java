@@ -57,16 +57,11 @@ public class MessageResource {
 
 	private Predicate<Message> predicate(final String recipientId, final String conversationId,
 			final String lastTransmission) {
-		return new Predicate<Message>() {
-			@Override
-			public boolean test(Message t) {
-				return (recipientId == null || t.getRecipientIds() == null
-						|| contains(t.getRecipientIds(), recipientId))
-						&& (conversationId == t.getConversationId()
-								|| conversationId != null && conversationId.equals(t.getConversationId()))
-						&& (lastTransmission == null || lastTransmission.compareTo(t.getTransmission()) < 0);
-			}
-		};
+		return (message) -> (recipientId == null || message.getRecipientIds() == null
+				|| contains(message.getRecipientIds(), recipientId))
+				&& (conversationId == message.getConversationId()
+						|| conversationId != null && conversationId.equals(message.getConversationId()))
+				&& (lastTransmission == null || lastTransmission.compareTo(message.getTransmission()) < 0);
 	}
 
 }

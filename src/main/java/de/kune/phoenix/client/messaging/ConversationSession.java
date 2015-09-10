@@ -44,7 +44,7 @@ public class ConversationSession {
 	private String conversationId;
 	private SimpleKeyStore conversationKeyStore;
 	private KeyPair sessionKeyPair;
-	private Map<String, PublicKey> participantsPublicKeys = new LinkedHashMap<String, PublicKey>();
+	private Map<String, PublicKey> participantsPublicKeys = new LinkedHashMap<>();
 	private MessageCallback messageCallback;
 	private ClientSession clientSession;
 

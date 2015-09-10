@@ -7,7 +7,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Predicate;
 
 import org.junit.Test;
 
@@ -37,7 +36,7 @@ public class ObjectStoreTest {
 		final AtomicLong removed = new AtomicLong();
 		final AtomicLong updated = new AtomicLong();
 		final ObjectStore<TestIdentifiable> store = new DefaultObjectStore<TestIdentifiable, Long>();
-		store.addListener(truePredicate(), countingListener(added, removed, updated));
+		store.addListener(t -> true, countingListener(added, removed, updated));
 		fill(store, 500);
 		ExecutorService addExecutor = addObjects(store, 500);
 		ExecutorService removeExecutor = removeObjects(store, 250);
@@ -52,15 +51,6 @@ public class ObjectStoreTest {
 		assertEquals(1000L, added.get());
 		assertEquals(250L, removed.get());
 		assertEquals(250L, updated.get());
-	}
-
-	private Predicate<TestIdentifiable> truePredicate() {
-		return new Predicate<ObjectStoreTest.TestIdentifiable>() {
-			@Override
-			public boolean test(TestIdentifiable t) {
-				return true;
-			}
-		};
 	}
 
 	private ObjectStoreListener<TestIdentifiable> countingListener(final AtomicLong added, final AtomicLong removed,
@@ -103,17 +93,7 @@ public class ObjectStoreTest {
 				store.add(new TestIdentifiable(System.currentTimeMillis()));
 			}
 		}.start();
-		store.await(greaterThan(reference));
-	}
-
-	private Predicate<TestIdentifiable> greaterThan(final Long reference) {
-		// return (t)->(reference < t.getId());
-		return new Predicate<TestIdentifiable>() {
-			@Override
-			public boolean test(TestIdentifiable t) {
-				return reference < t.getId();
-			}
-		};
+		store.await(t -> (reference < t.getId()));
 	}
 
 	@Test
@@ -122,7 +102,7 @@ public class ObjectStoreTest {
 		final ObjectStore<TestIdentifiable> store = new DefaultObjectStore<TestIdentifiable, Long>();
 		addObjects(store, 500);
 		while (store.get().size() < 500) {
-			store.await(greaterThan(reference));
+			store.await(t -> (reference < t.getId()));
 		}
 	}
 
@@ -130,16 +110,13 @@ public class ObjectStoreTest {
 		ExecutorService executor = Executors.newCachedThreadPool();
 		for (int i = 0; i < count; i++) {
 			final Long number = (long) i;
-			executor.submit(new Callable<Void>() {
-				@Override
-				public Void call() throws Exception {
-					try {
-						Thread.sleep(500 + (int) (Math.random() * 500));
-					} catch (InterruptedException e) {
-					}
-					store.add(new TestIdentifiable(number));
-					return null;
+			executor.submit(() -> {
+				try {
+					Thread.sleep(500 + (int) (Math.random() * 500));
+				} catch (InterruptedException e) {
 				}
+				store.add(new TestIdentifiable(number));
+				return null;
 			});
 		}
 		noise(store, executor, 100);
@@ -150,16 +127,13 @@ public class ObjectStoreTest {
 	private ExecutorService removeObjects(final ObjectStore<TestIdentifiable> store, int count) {
 		ExecutorService executor = Executors.newCachedThreadPool();
 		for (int i = 0; i < count; i++) {
-			executor.submit(new Callable<Void>() {
-				@Override
-				public Void call() throws Exception {
-					try {
-						Thread.sleep(500 + (int) (Math.random() * 500));
-					} catch (InterruptedException e) {
-					}
-					store.remove(store.get().iterator().next());
-					return null;
+			executor.submit(() -> {
+				try {
+					Thread.sleep(500 + (int) (Math.random() * 500));
+				} catch (InterruptedException e) {
 				}
+				store.remove(store.get().iterator().next());
+				return null;
 			});
 		}
 		noise(store, executor, 100);
@@ -170,16 +144,12 @@ public class ObjectStoreTest {
 	private ExecutorService updateObjects(final ObjectStore<TestIdentifiable> store, int count) {
 		ExecutorService executor = Executors.newCachedThreadPool();
 		for (int i = 0; i < count; i++) {
-			executor.submit(new Callable<Void>() {
-				@Override
-				public Void call() throws Exception {
-					try {
-						Thread.sleep(500 + (int) (Math.random() * 500));
-					} catch (InterruptedException e) {
-					}
-					store.update(store.get().iterator().next());
-					return null;
+			executor.submit(() -> {
+				try {
+					Thread.sleep(500 + (int) (Math.random() * 500));
+				} catch (InterruptedException e) {
 				}
+				store.update(store.get().iterator().next());
 			});
 		}
 		noise(store, executor, 100);
