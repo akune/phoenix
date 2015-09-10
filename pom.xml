@@ -11,10 +11,11 @@
     <maven.tomcat.ajp.port>8182</maven.tomcat.ajp.port>
     <maven.tomcat.path>/</maven.tomcat.path>
     <!-- Convenience property to set the GWT version -->
-    <gwtVersion>2.7.0</gwtVersion>
+<!--     <gwtVersion>2.7.0</gwtVersion> -->
+    <gwtVersion>2.8.0-SNAPSHOT</gwtVersion>
     <!-- GWT needs at least java 1.6 -->
-    <maven.compiler.source>1.6</maven.compiler.source>
-    <maven.compiler.target>1.6</maven.compiler.target>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <compiler.output.directory>${project.build.directory}/${project.build.finalName}/WEB-INF/classes</compiler.output.directory>
   </properties>

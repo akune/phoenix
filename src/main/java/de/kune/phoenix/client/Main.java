@@ -5,6 +5,7 @@ import static com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat.DATE_TI
 import static java.util.Arrays.asList;
 
 import java.io.UnsupportedEncodingException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -40,8 +41,6 @@ import de.kune.phoenix.client.messaging.ConversationSession;
 import de.kune.phoenix.client.messaging.InvitationCallback;
 import de.kune.phoenix.client.messaging.MessageCallback;
 import de.kune.phoenix.client.messaging.MessageService;
-import de.kune.phoenix.client.messaging.MessageService.EventSource;
-import de.kune.phoenix.client.messaging.MessageService.EventSource.EventSourceHandler;
 import de.kune.phoenix.shared.Message;
 
 public class Main implements EntryPoint {
@@ -93,24 +92,21 @@ public class Main implements EntryPoint {
 	}
 
 	public void onModuleLoad() {
-		MessageService.EventSource.connect("http://localhost:8888/es", new EventSourceHandler() {
+		MessageService service = GWT.create(MessageService.class);
+		service.receive(null, null, new Callback<Collection<Message>, String>() {
+			
 			@Override
-			public void handleOpen(EventSource es) {
-				GWT.log("ES open");
+			public void onSuccess(Collection<Message> result) {
+				GWT.log(result.toString());
 			}
+			
 			@Override
-			public void handleMessage(EventSource es, String message) {
-				GWT.log("Received ES message: " + message);
-			}
-			@Override
-			public void handleClose(EventSource es) {
-				GWT.log("ES closed");
-			}
-			@Override
-			public void handleError(EventSource es, String message) {
-				GWT.log("ES error: " + message);
+			public void onFailure(String reason) {
+				// TODO Auto-generated method stub
+				
 			}
 		});
+		// es.subscribe("somestuff");
 		// MessageService.WebSocket.connect("ws://echo.websocket.org/", new
 		// WebSocketHandler() {
 		//
@@ -298,7 +294,7 @@ public class Main implements EntryPoint {
 				conversationPanel.add(new Image("img/phoenix-avatar.png"));
 				conversationPanel.add(new Label("Phoenix"));
 			} else {
-				conversationPanel.add(new Image("http://www.gravatar.com/avatar/ef11f4d918bcb95c61ac900db78d080f"));
+				conversationPanel.add(new Image("https://www.gravatar.com/avatar/ef11f4d918bcb95c61ac900db78d080f"));
 				conversationPanel.add(new Label("Unknown"));
 			}
 			avatarPanel.add(conversationPanel);

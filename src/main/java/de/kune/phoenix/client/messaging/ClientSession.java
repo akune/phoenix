@@ -16,6 +16,7 @@ import de.kune.phoenix.client.crypto.MutableKeyStore;
 import de.kune.phoenix.client.crypto.PublicKey;
 import de.kune.phoenix.client.crypto.SimpleKeyStore;
 import de.kune.phoenix.client.crypto.util.Base64Utils;
+import de.kune.phoenix.client.messaging.PollingRestMessageReceiver.DecryptedMessageHandler;
 import de.kune.phoenix.shared.Message;
 import de.kune.phoenix.shared.Message.Type;
 
@@ -81,21 +82,21 @@ public class ClientSession {
 
 	public void start(InvitationCallback invitationCallback) {
 		this.invitationCallback = invitationCallback;
-		new AbstractMessageReceiver(keyPair.getPublicKey().getId(), null, keyStore) {
+		new PollingRestMessageReceiver(keyPair.getPublicKey().getId(), keyStore, new DecryptedMessageHandler() {
 			@Override
-			protected void handleReceivedMessage(Message message, byte[] plainContent) {
-				handleMessage(message, plainContent);
+			public void handleMessage(Message message, byte[] plainContent) {
+				handleIncomingMessage(message, plainContent);
 			}
-		}.start();
+		}).start();
 	}
 
-	protected void handleMessage(final Message message, byte[] plainContent) {
+	protected void handleIncomingMessage(final Message message, byte[] plainContent) {
 		if (message.getMessageType() == Type.INVITATION) {
 			final byte[] conversationId = plainContent;
 			new Timer() {
 				public void run() {
-					invitationCallback.handleInvitation(new ConversationSession(ClientSession.this, conversationId, keyPair,
-							Arrays.asList(keyPair.getPublicKey().getId(), message.getSenderId())));
+					invitationCallback.handleInvitation(new ConversationSession(ClientSession.this, conversationId,
+							keyPair, Arrays.asList(keyPair.getPublicKey().getId(), message.getSenderId())));
 				}
 			}.schedule(0);
 		} else if (message.getMessageType() == Type.INTRODUCTION) {

@@ -7,32 +7,36 @@ import org.fusesource.restygwt.client.Method;
 import org.fusesource.restygwt.client.MethodCallback;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Timer;
 
 import de.kune.phoenix.client.crypto.KeyStore;
 import de.kune.phoenix.shared.Message;
 
-public abstract class AbstractMessageReceiver {
+public class PollingRestMessageReceiver {
 
-	private final Timer messageReceiverTimer = new Timer() {
+	private static final int pollInterval = 5000;
 
-		private Long lastTransmission;
+	public static interface DecryptedMessageHandler {
+		void handleMessage(Message message, byte[] content);
+	}
+
+	private final Timer pollingRestReceiverTimer = new Timer() {
+
+		private String lastTransmission;
 
 		@Override
 		public void run() {
-			GWT.log("running client session message timer");
 			MethodCallback<List<Message>> messageHandler = new MethodCallback<List<Message>>() {
 
 				@Override
 				public void onSuccess(Method method, List<Message> response) {
 					for (Message message : keyMessagesFirst(response)) {
 						if (lastTransmission == null
-								|| lastTransmission.compareTo(message.getTransmission().getTime()) < 0) {
-							lastTransmission = message.getTransmission().getTime();
+								|| lastTransmission.compareTo(message.getTransmission()) < 0) {
+							lastTransmission = message.getTransmission();
 						}
 						try {
-							GWT.log("received message from " + (conversationId == null ? " general" : conversationId)
+							GWT.log("received message from " + (conversationId == null ? "general" : conversationId)
 									+ ": " + message);
 							validateSignature(message);
 							processMessage(message);
@@ -40,13 +44,13 @@ public abstract class AbstractMessageReceiver {
 							throw new RuntimeException(e);
 						}
 					}
-					messageReceiverTimer.schedule(1000);
+					pollingRestReceiverTimer.schedule(pollInterval);
 				}
 
 				private List<Message> keyMessagesFirst(List<Message> response) {
 					List<Message> keyMessages = new ArrayList<Message>();
 					List<Message> otherMessages = new ArrayList<Message>();
-					for (Message m: response) {
+					for (Message m : response) {
 						if (m.getMessageType() == Message.Type.SECRET_KEY) {
 							keyMessages.add(m);
 						} else {
@@ -61,9 +65,9 @@ public abstract class AbstractMessageReceiver {
 
 				private void processMessage(Message message) {
 					if (message.getKeyId() == null) {
-						handleReceivedMessage(message, message.getContent());
+						handler.handleMessage(message, message.getContent());
 					} else if (keyStore.getDecryptionKey(message.getKeyId()) != null) {
-						handleReceivedMessage(message,
+						handler.handleMessage(message,
 								message.getDecryptedContent(keyStore.getDecryptionKey(message.getKeyId())));
 					} else {
 						throw new IllegalStateException(
@@ -90,36 +94,37 @@ public abstract class AbstractMessageReceiver {
 
 				@Override
 				public void onFailure(Method method, Throwable exception) {
-					messageReceiverTimer.schedule(5000);
+					pollingRestReceiverTimer.schedule(5000);
 					throw new RuntimeException(exception);
 				}
 			};
-			if (conversationId == null) {
-				messageService.get(false, lastTransmission, receiverId, messageHandler);
-			} else {
-				messageService.getFromConversation(URL.encodePathSegment(conversationId), false, lastTransmission, receiverId, messageHandler);
-			}
+			messageService.get(false, lastTransmission, receiverId, conversationId, messageHandler);
 		}
 	};
 
 	private final MessageService messageService = MessageService.instance();
 
-	private final String receiverId;
+	private KeyStore keyStore;
 
-	private final KeyStore keyStore;
+	private String receiverId;
 
 	private String conversationId;
 
-	public AbstractMessageReceiver(String receiverId, String conversationId, KeyStore keyStore) {
+	private DecryptedMessageHandler handler;
+
+	public PollingRestMessageReceiver(String receiverId, KeyStore keyStore, DecryptedMessageHandler handler) {
 		this.receiverId = receiverId;
-		this.conversationId = conversationId;
 		this.keyStore = keyStore;
+		this.handler = handler;
 	}
 
-	protected abstract void handleReceivedMessage(final Message message, byte[] decryptedContent);
+	public PollingRestMessageReceiver(String receiverId, String conversationId, KeyStore keyStore, DecryptedMessageHandler handler) {
+		this(receiverId, keyStore, handler);
+		this.conversationId = conversationId;
+	}
 
 	public void start() {
-		messageReceiverTimer.schedule(100);
+		pollingRestReceiverTimer.schedule(pollInterval);
 	}
 
 }

@@ -14,7 +14,6 @@ import org.fusesource.restygwt.client.Method;
 import org.fusesource.restygwt.client.MethodCallback;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.http.client.URL;
 
 import de.kune.phoenix.client.crypto.AsymmetricCipher;
 import de.kune.phoenix.client.crypto.KeyPair;
@@ -25,10 +24,21 @@ import de.kune.phoenix.client.crypto.SimpleKeyStore;
 import de.kune.phoenix.client.crypto.SymmetricCipher;
 import de.kune.phoenix.client.crypto.util.Base64Utils;
 import de.kune.phoenix.client.crypto.util.Sha256;
+import de.kune.phoenix.client.messaging.PollingRestMessageReceiver.DecryptedMessageHandler;
 import de.kune.phoenix.shared.Message;
 import de.kune.phoenix.shared.Message.Type;
 
 public class ConversationSession {
+
+	private static final MethodCallback<Void> noActionMethodCallback = new MethodCallback<Void>() {
+		@Override
+		public void onFailure(Method method, Throwable exception) {
+		}
+
+		@Override
+		public void onSuccess(Method method, Void response) {
+		}
+	};
 
 	private final MessageService messageService = MessageService.instance();
 	private String conversationId;
@@ -80,12 +90,13 @@ public class ConversationSession {
 
 	public void start(MessageCallback callback) {
 		this.messageCallback = callback;
-		new AbstractMessageReceiver(sessionKeyPair.getPublicKey().getId(), conversationId, conversationKeyStore) {
-			@Override
-			protected void handleReceivedMessage(Message message, byte[] plainContent) {
-				ConversationSession.this.handleIncomingMessage(message, plainContent);
-			}
-		}.start();
+		new PollingRestMessageReceiver(sessionKeyPair.getPublicKey().getId(), conversationId, conversationKeyStore,
+				new DecryptedMessageHandler() {
+					@Override
+					public void handleMessage(Message message, byte[] plainContent) {
+						handleIncomingMessage(message, plainContent);
+					}
+				}).start();
 	}
 
 	/**
@@ -100,19 +111,12 @@ public class ConversationSession {
 		Message message = new Message();
 		message.setMessageType(Type.INTRODUCTION);
 		message.setSenderId(sessionKeyPair.getPublicKey().getId());
+		message.setConversationId(getId());
 		message.setKeyId(secretKey.getId());
 		message.setAndEncryptContent(secretKey, conversationKeyStore.getPublicKey(participantId).getPlainKey());
 		message.setTimestamp(new Date());
 		message.sign(sessionKeyPair.getPrivateKey());
-		messageService.postToConversation(URL.encodePathSegment(getId()), message, new MethodCallback<Void>() {
-			@Override
-			public void onFailure(Method method, Throwable exception) {
-			}
-
-			@Override
-			public void onSuccess(Method method, Void response) {
-			}
-		});
+		messageService.post(message, noActionMethodCallback);
 	}
 
 	private SecretKey getSecretKey() {
@@ -142,7 +146,7 @@ public class ConversationSession {
 		SecretKey key = getSecretKey();
 		Message message = new Message();
 		message.setSenderId(sessionKeyPair.getPublicKey().getId());
-		// message.setRecipientIds(participantsPublicKeys.keySet());
+		message.setConversationId(getId());
 		message.setMessageType(Message.Type.PLAIN_TEXT);
 		try {
 			message.setAndEncryptContent(key, content.getBytes("UTF-8"));
@@ -152,22 +156,13 @@ public class ConversationSession {
 		message.setKeyId(key.getId());
 		message.setTimestamp(new Date());
 		message.sign(sessionKeyPair.getPrivateKey());
-		messageService.postToConversation(URL.encodePathSegment(conversationId), message, new MethodCallback<Void>() {
-			@Override
-			public void onSuccess(Method method, Void response) {
-				// TODO Auto-generated method stub
-			}
-
-			@Override
-			public void onFailure(Method method, Throwable exception) {
-				// TODO Auto-generated method stub
-			}
-		});
+		messageService.post(message, noActionMethodCallback);
 	}
 
 	private void sendSecretKey(SecretKey key, String recipientId) {
 		Message keyMessage = new Message();
 		keyMessage.setSenderId(sessionKeyPair.getPublicKey().getId());
+		keyMessage.setConversationId(getId());
 		keyMessage.setMessageType(Message.Type.SECRET_KEY);
 		keyMessage.setAndEncryptContent(participantsPublicKeys.get(recipientId), key.getPlainKey());
 		keyMessage.setKeyId(recipientId);
@@ -175,18 +170,7 @@ public class ConversationSession {
 		keyMessage.setTimestamp(new Date());
 		keyMessage.sign(sessionKeyPair.getPrivateKey());
 		GWT.log("sending secret key message to <" + conversationId + ">: " + keyMessage);
-		messageService.postToConversation(URL.encodePathSegment(conversationId), keyMessage,
-				new MethodCallback<Void>() {
-					@Override
-					public void onSuccess(Method method, Void response) {
-						// TODO Auto-generated method stub
-					}
-
-					@Override
-					public void onFailure(Method method, Throwable exception) {
-						// TODO Auto-generated method stub
-					}
-				});
+		messageService.post(keyMessage, noActionMethodCallback);
 	}
 
 	private void handleIncomingMessage(Message message, byte[] content) {

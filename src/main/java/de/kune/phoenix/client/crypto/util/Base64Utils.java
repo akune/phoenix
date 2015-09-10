@@ -40,7 +40,7 @@ public final class Base64Utils {
 	 * @return A string containing the Base64 encoded data.
 	 */
 	public static String encode(byte[] in) {
-		return encode(in, 0, in.length);
+		return in == null ? null : encode(in, 0, in.length);
 	}
 
 	/**
@@ -54,7 +54,7 @@ public final class Base64Utils {
 	 * @return A string containing the Base64 encoded data.
 	 */
 	public static String encode(byte[] in, int iLen) {
-		return encode(in, 0, iLen);
+		return in == null ? null : encode(in, 0, iLen);
 	}
 
 	/**
@@ -70,7 +70,7 @@ public final class Base64Utils {
 	 *            <code>iOff</code>.
 	 * @return A String containing the Base64 encoded data.
 	 */
-	public static String encode(byte[] in, int iOff, int iLen) {
+	private static String encode(byte[] in, int iOff, int iLen) {
 		int oDataLen = (iLen * 4 + 2) / 3; // output length without padding
 		int oLen = ((iLen + 2) / 3) * 4; // output length including padding
 		char[] out = new char[oLen];
@@ -106,7 +106,7 @@ public final class Base64Utils {
 	 *             If the input is not valid Base64 encoded data.
 	 */
 	public static byte[] decode(String s) {
-		return decode(s.toCharArray());
+		return s == null ? null : decode(s.toCharArray());
 	}
 
 	/**
@@ -119,7 +119,7 @@ public final class Base64Utils {
 	 * @throws IllegalArgumentException
 	 *             If the input is not valid Base64 encoded data.
 	 */
-	public static byte[] decode(char[] in) {
+	private static byte[] decode(char[] in) {
 		return decode(in, 0, in.length);
 	}
 
@@ -139,7 +139,7 @@ public final class Base64Utils {
 	 * @throws IllegalArgumentException
 	 *             If the input is not valid Base64 encoded data.
 	 */
-	public static byte[] decode(char[] in, int iOff, int iLen) {
+	private static byte[] decode(char[] in, int iOff, int iLen) {
 		if (iLen % 4 != 0)
 			throw new IllegalArgumentException("Length of Base64 encoded input string is not a multiple of 4.");
 		while (iLen > 0 && in[iOff + iLen - 1] == '=')

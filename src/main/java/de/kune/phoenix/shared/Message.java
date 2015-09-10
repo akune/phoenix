@@ -15,7 +15,7 @@ import de.kune.phoenix.client.crypto.util.Base64Utils;
 import de.kune.phoenix.client.crypto.util.Digest;
 import de.kune.phoenix.client.crypto.util.Sha256;
 
-public class Message {
+public class Message implements Identifiable<String> {
 
 	public static enum Type {
 		/**
@@ -52,6 +52,10 @@ public class Message {
 	 */
 	private String[] recipientIds;
 	/**
+	 * The id of the conversation this message was sent to.
+	 */
+	private String conversationId;
+	/**
 	 * The id of the key this message is encrypted with.
 	 */
 	private String keyId;
@@ -75,7 +79,7 @@ public class Message {
 	 * The time stamp when this message was received by the first transmitting
 	 * server node.
 	 */
-	private Date transmission;
+	private String transmission;
 
 	public Message() {
 		Random random = new Random();
@@ -97,6 +101,14 @@ public class Message {
 
 	public void setSenderId(String senderId) {
 		this.senderId = senderId;
+	}
+
+	public String getConversationId() {
+		return conversationId;
+	}
+
+	public void setConversationId(String conversationId) {
+		this.conversationId = conversationId;
 	}
 
 	public String[] getRecipientIds() {
@@ -147,11 +159,11 @@ public class Message {
 		this.signature = signature;
 	}
 
-	public Date getTransmission() {
+	public String getTransmission() {
 		return transmission;
 	}
 
-	public void setTransmission(Date transmission) {
+	public void setTransmission(String transmission) {
 		this.transmission = transmission;
 	}
 
@@ -186,35 +198,30 @@ public class Message {
 	}
 
 	private byte[] createDigest(byte[] salt) {
-		// GWT.log("digesting...");
 		Digest d = new Sha256();
-		// GWT.log("...salting: " + Arrays.toString(salt));
 		d = d.feed(salt);
 		if (getId() != null) {
 			d = d.feed(getId());
 		}
 		if (getContent() != null) {
-			// GWT.log("...content: " + Arrays.toString(content));
 			d = d.feed(getContent());
 		}
-		// GWT.log("...timestamp: " + timestamp == null ? "" :
-		// Long.toString(timestamp.getTime()));
 		d = d.feed(timestamp == null ? "" : Long.toString(timestamp.getTime()));
 		if (getKeyId() != null) {
 			d = d.feed(getKeyId());
 		}
 		if (getSenderId() != null) {
-			// GWT.log("...sender: " + getSenderId());
 			d = d.feed(getSenderId());
+		}
+		if (getConversationId() != null) {
+			d = d.feed(getConversationId());
 		}
 		if (recipientIds != null) {
 			for (String recipientId : getRecipientIds()) {
-				// GWT.log("...recipient: " + recipientId);
 				d = d.feed(recipientId);
 			}
 		}
 		if (getMessageType() != null) {
-			// GWT.log("...message type: " + messageType.name());
 			d = d.feed(messageType.name());
 		}
 		return d.iterate(15).toByteArray(salt);
@@ -240,10 +247,10 @@ public class Message {
 
 	@Override
 	public String toString() {
-		return "Message [id=" + id + ", senderId=" + senderId + ", recipientIds=" + Arrays.toString(recipientIds)
-				+ ", keyId=" + keyId + ", messageType=" + messageType + ", content=" + Base64Utils.encode(content)
-				+ ", timestamp=" + timestamp + ", signature=" + Base64Utils.encode(signature) + ", transmission="
-				+ transmission + "]";
+		return "Message [id=" + id + ", senderId=" + senderId + ", conversationId=" + conversationId + ", recipientIds="
+				+ Arrays.toString(recipientIds) + ", keyId=" + keyId + ", messageType=" + messageType + ", content="
+				+ Base64Utils.encode(content) + ", timestamp=" + timestamp + ", signature="
+				+ Base64Utils.encode(signature) + ", transmission=" + transmission + "]";
 	}
 
 }

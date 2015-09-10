@@ -1,23 +1,31 @@
 package de.kune.phoenix.client.messaging;
 
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import org.fusesource.restygwt.client.Defaults;
+import org.fusesource.restygwt.client.JsonEncoderDecoder;
 import org.fusesource.restygwt.client.MethodCallback;
 import org.fusesource.restygwt.client.RestService;
 
+import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.json.client.JSONArray;
+import com.google.gwt.json.client.JSONParser;
+import com.google.gwt.json.client.JSONValue;
 
+import de.kune.phoenix.client.messaging.MessageService.EventSource.EventSourceHandler;
 import de.kune.phoenix.shared.Message;
 
 public class MessageService {
@@ -33,9 +41,9 @@ public class MessageService {
 
 			void handleClose(EventSource es);
 
-			void handleMessage(EventSource es, String message);
-			
-			void handleError(EventSource es, String message);
+			void handleMessage(EventSource es, String messageType, String message);
+
+			void handleError(EventSource es, String messageType, String message);
 		}
 
 		public static EventSource connect(String uri, EventSourceHandler handler) {
@@ -43,10 +51,48 @@ public class MessageService {
 		}
 
 		private EventSourceJso jso;
-		
-		private EventSource(String uri, EventSourceHandler handler) {
+
+		private EventSource(String uri, final EventSourceHandler handler) {
 			jso = EventSourceJso.create(uri, this);
-			jso.connect(handler);
+			jso.connect(new EventSourceHandler() {
+
+				@Override
+				public void handleOpen(EventSource es) {
+					handler.handleOpen(es);
+				}
+
+				@Override
+				public void handleClose(EventSource es) {
+					handler.handleClose(es);
+				}
+
+				@Override
+				public void handleMessage(EventSource es, String messageType, String message) {
+					StringBuilder result = new StringBuilder();
+					for (String line : message.split("\n")) {
+						if (line.toLowerCase().startsWith("data:")) {
+							line = line.substring(5).trim();
+							result.append(line);
+							result.append("\n");
+						}
+					}
+					handler.handleMessage(es, messageType, result.toString());
+				}
+
+				@Override
+				public void handleError(EventSource es, String messageType, String message) {
+					handler.handleError(es, messageType, message);
+				}
+
+			});
+		}
+
+		public void subscribe(String messageType) {
+			jso.subscribe(messageType);
+		}
+
+		public void unsubscribe(String messageType) {
+			jso.unsubscribe(messageType);
 		}
 
 		public void close() {
@@ -76,32 +122,40 @@ public class MessageService {
 			}-*/;
 
 			private native final void connect(EventSourceHandler handler) /*-{
-			var es = new EventSource(this.uri);
-			this.es = es;
-			var container = this.container;
-			this.es.addEventListener('message', function(evt) {
-				handler.@de.kune.phoenix.client.messaging.MessageService.EventSource.EventSourceHandler::handleMessage(Lde/kune/phoenix/client/messaging/MessageService$EventSource;Ljava/lang/String;)(container,evt.data);
-			});
-			this.es.addEventListener('open', function(evt) {
-				handler.@de.kune.phoenix.client.messaging.MessageService.EventSource.EventSourceHandler::handleOpen(Lde/kune/phoenix/client/messaging/MessageService$EventSource;)(container);
-			});
-			this.es.addEventListener('close', function(evt) {
-				handler.@de.kune.phoenix.client.messaging.MessageService.EventSource.EventSourceHandler::handleClose(Lde/kune/phoenix/client/messaging/MessageService$EventSource;)(container);
-			});
-			this.es.addEventListener('error', function(evt) {
-				handler.@de.kune.phoenix.client.messaging.MessageService.EventSource.EventSourceHandler::handleError(Lde/kune/phoenix/client/messaging/MessageService$EventSource;Ljava/lang/String;)(container,evt.data);
-			});
-		}-*/;
+				var es = new EventSource(this.uri);
+				var container = this.container;
+				this.es = es;
+				this.onMessage = function(evt) {
+					handler.@de.kune.phoenix.client.messaging.MessageService.EventSource.EventSourceHandler::handleMessage(Lde/kune/phoenix/client/messaging/MessageService$EventSource;Ljava/lang/String;Ljava/lang/String;)(container,evt.event,evt.data);
+				}; 
+				this.es.addEventListener('message', this.onMessage);
+				this.es.addEventListener('open', function(evt) {
+					handler.@de.kune.phoenix.client.messaging.MessageService.EventSource.EventSourceHandler::handleOpen(Lde/kune/phoenix/client/messaging/MessageService$EventSource;)(container);
+				});
+				this.es.addEventListener('close', function(evt) {
+					handler.@de.kune.phoenix.client.messaging.MessageService.EventSource.EventSourceHandler::handleClose(Lde/kune/phoenix/client/messaging/MessageService$EventSource;)(container);
+				});
+				this.es.addEventListener('error', function(evt) {
+					handler.@de.kune.phoenix.client.messaging.MessageService.EventSource.EventSourceHandler::handleError(Lde/kune/phoenix/client/messaging/MessageService$EventSource;Ljava/lang/String;Ljava/lang/String;)(container,evt.event,evt.data);
+				});
+			}-*/;
 
-		private native final int getState() /*-{
-			return this.es.readyState;
-		}-*/;
+			private native final int getState() /*-{
+				return this.es.readyState;
+			}-*/;
 
-		private native final void close() /*-{
-			this.es.close();
-		}-*/;
+			private native final void close() /*-{
+				this.es.close();
+			}-*/;
 
-		
+			private native final void subscribe(String messageType) /*-{
+				this.es.addEventListener(messageType, this.onMessage);
+			}-*/;
+
+			private native final void unsubscribe(String messageType) /*-{
+				this.es.removeEventListener(messageType, this.onMessage);
+			}-*/;
+
 		}
 
 	}
@@ -205,23 +259,11 @@ public class MessageService {
 		@Consumes(MediaType.APPLICATION_JSON)
 		void post(Message message, MethodCallback<Void> callback);
 
-		@POST
-		@Path("conversation/{conversation}/message")
-		@Consumes(MediaType.APPLICATION_JSON)
-		void postToConversation(@PathParam("conversation") String conversationId, Message message,
-				MethodCallback<Void> callback);
-
 		@GET
 		@Path("message")
 		@Produces(MediaType.APPLICATION_JSON)
-		void get(@QueryParam("wait") boolean wait, @QueryParam("transmitted-after") Long transmittedAfter,
-				@QueryParam("recipient-id") String recipientId, MethodCallback<List<Message>> callback);
-
-		@GET
-		@Path("conversation/{conversation}/message")
-		@Produces(MediaType.APPLICATION_JSON)
-		void getFromConversation(@PathParam("conversation") String conversationId, @QueryParam("wait") boolean wait,
-				@QueryParam("transmitted-after") Long transmittedAfter, @QueryParam("recipient-id") String recipientId,
+		void get(@QueryParam("wait") boolean wait, @QueryParam("last-transmission") String lastTransmission,
+				@QueryParam("recipient-id") String recipientId, @QueryParam("conversation-id") String conversationId,
 				MethodCallback<List<Message>> callback);
 
 	}
@@ -245,17 +287,44 @@ public class MessageService {
 		restMessageService.post(message, callback);
 	}
 
-	public void postToConversation(String conversationId, Message message, MethodCallback<Void> callback) {
-		restMessageService.postToConversation(conversationId, message, callback);
+	public void get(boolean wait, String lastTransmission, String recipientId, String conversationId,
+			MethodCallback<List<Message>> callback) {
+		restMessageService.get(wait, lastTransmission, recipientId, conversationId, callback);
 	}
 
-	public void get(boolean wait, Long transmittedAfter, String recipientId, MethodCallback<List<Message>> callback) {
-		restMessageService.get(wait, transmittedAfter, recipientId, callback);
-	}
+	public static interface MessagesCodec extends JsonEncoderDecoder<Message> {
+	};
 
-	public void getFromConversation(String conversationId, boolean wait, Long transmittedAfter,
-			@QueryParam("recipient-id") String recipientId, MethodCallback<List<Message>> callback) {
-		restMessageService.getFromConversation(conversationId, wait, transmittedAfter, recipientId, callback);
+	public void receive(String lastTransmission, String recipientId,
+			final Callback<Collection<Message>, String> callback) {
+		Defaults.setDateFormat(null);
+		final MessagesCodec messageCodec = GWT.create(MessagesCodec.class);
+		MessageService.EventSource.connect("es", new EventSourceHandler() {
+			@Override
+			public void handleOpen(EventSource es) {
+			}
+
+			@Override
+			public void handleMessage(EventSource es, String messageType, String message) {
+				JSONValue json = JSONParser.parseStrict(message);
+				GWT.log("--> array: " + json.isArray().toString());
+				JSONArray jsonArray = json.isArray();
+				Set<Message> result = new LinkedHashSet<Message>();
+				for (int i = 0; i < jsonArray.size(); i++) {
+					result.add(messageCodec.decode(jsonArray.get(i)));
+				}
+				 callback.onSuccess(result);
+			}
+
+			@Override
+			public void handleClose(EventSource es) {
+			}
+
+			@Override
+			public void handleError(EventSource es, String messageType, String message) {
+				callback.onFailure(message);
+			}
+		});
 	}
 
 }
