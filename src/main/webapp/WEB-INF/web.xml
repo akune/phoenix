@@ -4,19 +4,6 @@
           http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
   version="3.0">
 
-  <!-- <servlet> -->
-  <!-- <servlet-name>Event Source Servlet</servlet-name> -->
-  <!-- <servlet-class>de.kune.phoenix.server.EventSourceServlet</servlet-class> -->
-  <!-- </servlet> -->
-  <!-- <servlet-mapping> -->
-  <!-- <servlet-name>Jersey Web Application</servlet-name> -->
-  <!-- <url-pattern>/api/*</url-pattern> -->
-  <!-- </servlet-mapping> -->
-  <!-- <servlet-mapping> -->
-  <!-- <servlet-name>Event Source Servlet</servlet-name> -->
-  <!-- <url-pattern>/es/*</url-pattern> -->
-  <!-- </servlet-mapping> -->
-
   <context-param>
     <param-name>contextClass</param-name>
     <param-value>
@@ -42,9 +29,19 @@
     </init-param>
   </servlet>
 
+  <servlet>
+    <servlet-name>Event Source Servlet</servlet-name>
+    <servlet-class>de.kune.phoenix.server.EventSourceServlet</servlet-class>
+  </servlet>
+
   <servlet-mapping>
     <servlet-name>RestApplication</servlet-name>
     <url-pattern>/api/*</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>Event Source Servlet</servlet-name>
+    <url-pattern>/es/*</url-pattern>
   </servlet-mapping>
 
 </web-app>

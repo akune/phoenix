@@ -15,6 +15,10 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.context.support.WebApplicationContextUtils;
+
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,7 +31,15 @@ public class EventSourceServlet extends HttpServlet {
 
 	@Inject
 	private ObjectStore<Message> messageStore;
-	
+
+	@Override
+	public void init() throws ServletException {
+		super.init();
+		WebApplicationContext context = WebApplicationContextUtils.getWebApplicationContext(getServletContext());
+		AutowireCapableBeanFactory ctx = context.getAutowireCapableBeanFactory();
+		ctx.autowireBean(this);
+	}
+
 	private static class MessageTransmitter implements Runnable {
 		private ObjectMapper objectMapper = new ObjectMapper();
 		private ObjectStore<Message> messageStore;
