@@ -10,8 +10,11 @@
     <maven.tomcat.port>8082</maven.tomcat.port>
     <maven.tomcat.ajp.port>8182</maven.tomcat.ajp.port>
     <maven.tomcat.path>/</maven.tomcat.path>
+    <jersey2.version>2.21</jersey2.version>
+    <spring4.version>4.1.7.RELEASE</spring4.version>
+    <jaxrs.version>2.0.1</jaxrs.version>
     <!-- Convenience property to set the GWT version -->
-<!--     <gwtVersion>2.7.0</gwtVersion> -->
+    <!-- <gwtVersion>2.7.0</gwtVersion> -->
     <gwtVersion>2.8.0-SNAPSHOT</gwtVersion>
     <!-- GWT needs at least java 1.6 -->
     <maven.compiler.source>1.8</maven.compiler.source>
@@ -63,32 +66,71 @@
       <artifactId>restygwt</artifactId>
       <version>2.0.3</version>
     </dependency>
-    <!-- <dependency> -->
-    <!-- <groupId>javax.ws.rs</groupId> -->
-    <!-- <artifactId>javax.ws.rs-api</artifactId> -->
-    <!-- <version>2.0.1</version> -->
-    <!-- </dependency> -->
 
     <!-- server side dependencies -->
+    <dependency>
+      <groupId>javax.ws.rs</groupId>
+      <artifactId>javax.ws.rs-api</artifactId>
+      <version>${jaxrs.version}</version>
+    </dependency>
     <dependency>
       <groupId>asm</groupId>
       <artifactId>asm-all</artifactId>
       <version>3.3.1</version>
     </dependency>
     <dependency>
-      <groupId>com.sun.jersey</groupId>
-      <artifactId>jersey-bundle</artifactId>
-      <version>1.14</version>
+      <groupId>org.glassfish.jersey.containers</groupId>
+      <artifactId>jersey-container-servlet</artifactId>
+      <version>${jersey2.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.sun.jersey</groupId>
-      <artifactId>jersey-json</artifactId>
-      <version>1.14</version>
+      <groupId>org.glassfish.jersey.media</groupId>
+      <artifactId>jersey-media-json-jackson</artifactId>
+      <version>${jersey2.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.json</groupId>
-      <artifactId>json</artifactId>
-      <version>20090211</version>
+      <groupId>org.glassfish.jersey.ext</groupId>
+      <artifactId>jersey-spring3</artifactId>
+      <version>${jersey2.version}</version>
+      <exclusions>
+        <exclusion>
+          <artifactId>spring-beans</artifactId>
+          <groupId>org.springframework</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>spring-core</artifactId>
+          <groupId>org.springframework</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>spring-web</artifactId>
+          <groupId>org.springframework</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-core</artifactId>
+      <version>${spring4.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+      <version>${spring4.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-beans</artifactId>
+      <version>${spring4.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-web</artifactId>
+      <version>${spring4.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-aspects</artifactId>
+      <version>${spring4.version}</version>
     </dependency>
   </dependencies>
   <build>

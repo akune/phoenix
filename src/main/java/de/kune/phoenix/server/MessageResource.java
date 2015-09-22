@@ -4,6 +4,7 @@ import static de.kune.phoenix.server.util.ArrayUtils.contains;
 
 import java.util.function.Predicate;
 
+import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -19,11 +20,14 @@ import de.kune.phoenix.shared.Message;
 @Path("/")
 public class MessageResource {
 
-	private static final ObjectStore<Message> messageStore = new DefaultObjectStore<Message, String>();
-
-	public static ObjectStore<Message> getMessagStore() {
-		return messageStore;
-	}
+//	private static final ObjectStore<Message> messageStore = new DefaultObjectStore<Message, String>();
+//
+//	public static ObjectStore<Message> getMessagStore() {
+//		return messageStore;
+//	}
+	
+	@Inject
+	private ObjectStore<Message> messageStore;
 
 	@POST
 	@Path("message")

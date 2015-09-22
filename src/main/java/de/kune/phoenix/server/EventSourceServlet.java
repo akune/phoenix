@@ -9,14 +9,15 @@ import java.net.URLDecoder;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.kune.phoenix.shared.Message;
 
@@ -24,6 +25,9 @@ public class EventSourceServlet extends HttpServlet {
 
 	private static final long serialVersionUID = 1L;
 
+	@Inject
+	private ObjectStore<Message> messageStore;
+	
 	private static class MessageTransmitter implements Runnable {
 		private ObjectMapper objectMapper = new ObjectMapper();
 		private ObjectStore<Message> messageStore;
@@ -82,7 +86,7 @@ public class EventSourceServlet extends HttpServlet {
 		System.out.println("---> recipient: " + recipientId);
 		final String lastTransmission = getLastTransmission(req);
 		System.out.println("---> lastTransmission: " + lastTransmission);
-		new MessageTransmitter(MessageResource.getMessagStore(), recipientId, lastTransmission, resp.getWriter()).run();
+		new MessageTransmitter(messageStore, recipientId, lastTransmission, resp.getWriter()).run();
 	}
 
 	private String getLastTransmission(HttpServletRequest req) {
