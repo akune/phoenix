@@ -61,7 +61,9 @@ public class EventSourceServlet extends HttpServlet {
 				Set<Message> messages = messageStore.await(new Predicate<Message>() {
 					@Override
 					public boolean test(Message message) {
-						return (message.getRecipientIds() == null || contains(message.getRecipientIds(), recipientId))
+						return (message.getRecipientIds() == null
+//								|| contains(subscribedConversations, message.getConversationId()) 
+								|| contains(message.getRecipientIds(), recipientId))
 								&& (lastTransmission == null
 										|| lastTransmission.compareTo(message.getTransmission()) < 0);
 					}

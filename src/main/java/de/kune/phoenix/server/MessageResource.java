@@ -17,20 +17,13 @@ import javax.ws.rs.core.Response;
 
 import de.kune.phoenix.shared.Message;
 
-@Path("/")
+@Path("message")
 public class MessageResource {
 
-//	private static final ObjectStore<Message> messageStore = new DefaultObjectStore<Message, String>();
-//
-//	public static ObjectStore<Message> getMessagStore() {
-//		return messageStore;
-//	}
-	
 	@Inject
 	private ObjectStore<Message> messageStore;
 
 	@POST
-	@Path("message")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response post(Message message) {
 		message.setTransmission(messageStore.generateId());
@@ -39,7 +32,6 @@ public class MessageResource {
 	}
 
 	@GET
-	@Path("message")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response get(@QueryParam("wait") boolean wait, @QueryParam("last-transmission") String lastTransmission,
 			@QueryParam("recipient-id") String recipientId, @QueryParam("conversation-id") String conversationId) {
@@ -53,7 +45,6 @@ public class MessageResource {
 	}
 
 	@DELETE
-	@Path("message")
 	public Response clear() {
 		messageStore.clear();
 		return Response.status(200).build();

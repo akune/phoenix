@@ -5,7 +5,6 @@ import static com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat.DATE_TI
 import static java.util.Arrays.asList;
 
 import java.io.UnsupportedEncodingException;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -40,7 +39,6 @@ import de.kune.phoenix.client.messaging.ClientSession;
 import de.kune.phoenix.client.messaging.ConversationSession;
 import de.kune.phoenix.client.messaging.InvitationCallback;
 import de.kune.phoenix.client.messaging.MessageCallback;
-import de.kune.phoenix.client.messaging.MessageService;
 import de.kune.phoenix.shared.Message;
 
 public class Main implements EntryPoint {
@@ -92,20 +90,6 @@ public class Main implements EntryPoint {
 	}
 
 	public void onModuleLoad() {
-		MessageService service = GWT.create(MessageService.class);
-		service.receive(null, null, new Callback<Collection<Message>, String>() {
-			
-			@Override
-			public void onSuccess(Collection<Message> result) {
-				GWT.log(result.toString());
-			}
-			
-			@Override
-			public void onFailure(String reason) {
-				// TODO Auto-generated method stub
-				
-			}
-		});
 		// es.subscribe("somestuff");
 		// MessageService.WebSocket.connect("ws://echo.websocket.org/", new
 		// WebSocketHandler() {

@@ -7,6 +7,7 @@ import java.util.Date;
 import org.fusesource.restygwt.client.Method;
 import org.fusesource.restygwt.client.MethodCallback;
 
+import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
 
@@ -82,12 +83,28 @@ public class ClientSession {
 
 	public void start(InvitationCallback invitationCallback) {
 		this.invitationCallback = invitationCallback;
-		new PollingRestMessageReceiver(keyPair.getPublicKey().getId(), keyStore, new DecryptedMessageHandler() {
+		final Processor<Message> decryptorSession = new MessageDecryptorSession(keyStore,
+				new DecryptedMessageHandler() {
+					@Override
+					public void handleMessage(Message message, byte[] plainContent) {
+						handleIncomingMessage(message, plainContent);
+					}
+				});
+		GWT.log("Starting polling rest message receiver");
+		new PollingRestMessageReceiver(keyPair.getPublicKey().getId(), decryptorSession).start();
+		MessageService service = GWT.create(MessageService.class);
+		service.receive(null, null, new Callback<Collection<Message>, String>() {
 			@Override
-			public void handleMessage(Message message, byte[] plainContent) {
-				handleIncomingMessage(message, plainContent);
+			public void onSuccess(Collection<Message> result) {
+				GWT.log("Received ES message(s): " + result.toString());
+//				decryptorSession.process(result);
 			}
-		}).start();
+
+			@Override
+			public void onFailure(String reason) {
+				// TODO Auto-generated method stub
+			}
+		});
 	}
 
 	protected void handleIncomingMessage(final Message message, byte[] plainContent) {

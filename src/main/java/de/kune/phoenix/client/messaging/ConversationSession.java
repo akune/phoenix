@@ -90,13 +90,14 @@ public class ConversationSession {
 
 	public void start(MessageCallback callback) {
 		this.messageCallback = callback;
-		new PollingRestMessageReceiver(sessionKeyPair.getPublicKey().getId(), conversationId, conversationKeyStore,
+		MessageDecryptorSession decryptorSession = new MessageDecryptorSession(conversationKeyStore,
 				new DecryptedMessageHandler() {
 					@Override
 					public void handleMessage(Message message, byte[] plainContent) {
 						handleIncomingMessage(message, plainContent);
 					}
-				}).start();
+				});
+		new PollingRestMessageReceiver(sessionKeyPair.getPublicKey().getId(), conversationId, decryptorSession).start();
 	}
 
 	/**

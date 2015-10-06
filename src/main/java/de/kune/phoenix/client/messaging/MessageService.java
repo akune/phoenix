@@ -313,7 +313,7 @@ public class MessageService {
 				for (int i = 0; i < jsonArray.size(); i++) {
 					result.add(messageCodec.decode(jsonArray.get(i)));
 				}
-				 callback.onSuccess(result);
+				callback.onSuccess(result);
 			}
 
 			@Override
