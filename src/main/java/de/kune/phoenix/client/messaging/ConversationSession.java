@@ -121,7 +121,7 @@ public class ConversationSession {
 	}
 
 	private SecretKey getSecretKey() {
-		SecretKey secretKey = conversationKeyStore.getAnySecretKey();
+		SecretKey secretKey = conversationKeyStore.getLatestSecretKey();
 		if (secretKey == null) {
 			secretKey = SymmetricCipher.Factory.generateSecretKey(KeyStrength.STRONGEST);
 			conversationKeyStore.add(secretKey);

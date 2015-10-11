@@ -3,16 +3,18 @@ package de.kune.phoenix.client.crypto;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
 public class SimpleKeyStore implements MutableKeyStore {
 
-	private Map<String, SecretKey> secretKeys = new HashMap<String, SecretKey>();
+	private Map<String, SecretKey> secretKeys = new LinkedHashMap<String, SecretKey>();
 	private Map<String, PublicKey> publicKeys = new HashMap<String, PublicKey>();
 	private Set<KeyPair> keyPairs = new HashSet<KeyPair>();
 	private KeyStore parent;
+	private SecretKey latestSecretKey;
 
 	public SimpleKeyStore(KeyStore parent) {
 		this.parent = parent;
@@ -26,6 +28,7 @@ public class SimpleKeyStore implements MutableKeyStore {
 	public void add(Key key) {
 		if (key instanceof SecretKey) {
 			secretKeys.put(key.getId(), (SecretKey) key);
+			latestSecretKey = (SecretKey) key;
 		} else if (key instanceof PublicKey) {
 			publicKeys.put(key.getId(), (PublicKey) key);
 		}
@@ -64,15 +67,12 @@ public class SimpleKeyStore implements MutableKeyStore {
 		return result;
 	}
 	
-	public SecretKey getAnySecretKey() {
-		if (secretKeys.isEmpty()) {
-			return null;
-		}
-		return secretKeys.values().iterator().next();
-	}
-
 	public Collection<SecretKey> getAllSecretKeys() {
 		return new LinkedHashSet<SecretKey>(secretKeys.values());
+	}
+
+	public SecretKey getLatestSecretKey() {
+		return latestSecretKey;
 	}
 
 }
