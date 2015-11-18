@@ -2,7 +2,6 @@ package de.kune.phoenix.shared;
 
 import java.util.Arrays;
 import java.util.Date;
-import java.util.Random;
 
 import de.kune.phoenix.client.crypto.AsymmetricCipher;
 import de.kune.phoenix.client.crypto.Cipher;
@@ -82,9 +81,7 @@ public class Message implements Identifiable<String> {
 	private String transmission;
 
 	public Message() {
-		Random random = new Random();
-		this.id = Long.toString(random.nextLong()) + Long.toString(random.nextLong()) + Long.toString(random.nextLong())
-				+ Long.toString(random.nextLong()) + Long.toString(System.currentTimeMillis());
+		this.id = Base64Utils.encode(Identifiable.generateId(32));
 	}
 
 	public String getId() {
