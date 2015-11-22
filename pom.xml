@@ -13,9 +13,9 @@
     <jersey2.version>2.21</jersey2.version>
     <spring4.version>4.1.7.RELEASE</spring4.version>
     <jaxrs.version>2.0.1</jaxrs.version>
-    <!-- Convenience property to set the GWT version -->
-    <!-- <gwtVersion>2.7.0</gwtVersion> -->
-    <gwtVersion>2.8.0-SNAPSHOT</gwtVersion>
+    <!-- Convenience property to set the GWT versions -->
+    <gwtVersion>2.8.0-20151119.055453-99</gwtVersion>
+    <gwtPluginVersion>2.8.0-20150525.133542-8</gwtPluginVersion>
     <!-- GWT needs at least java 1.6 -->
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
@@ -188,7 +188,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>gwt-maven-plugin</artifactId>
-        <version>${gwtVersion}</version>
+        <version>${gwtPluginVersion}</version>
         <executions>
           <execution>
             <goals>

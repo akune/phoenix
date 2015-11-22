@@ -37,6 +37,13 @@ public class ClientSession {
 		keyStore.add(keyPair);
 	}
 
+	/**
+	 * Begin a conversation with the specified participants.
+	 * 
+	 * @param participantIds
+	 *            the participants
+	 * @return a new conversation session
+	 */
 	public ConversationSession beginConversation(Collection<String> participantIds) {
 		ConversationSession conversation = new ConversationSession(this, keyPair, participantIds);
 		GWT.log("beginning conversation: " + conversation.getId());
@@ -97,7 +104,7 @@ public class ClientSession {
 			@Override
 			public void onSuccess(Collection<Message> result) {
 				GWT.log("Received ES message(s): " + result.toString());
-//				decryptorSession.process(result);
+				// decryptorSession.process(result);
 			}
 
 			@Override
