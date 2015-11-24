@@ -14,8 +14,8 @@
     <spring4.version>4.1.7.RELEASE</spring4.version>
     <jaxrs.version>2.0.1</jaxrs.version>
     <!-- Convenience property to set the GWT versions -->
-    <gwtVersion>2.8.0-20151119.055453-99</gwtVersion>
-    <gwtPluginVersion>2.8.0-20150525.133542-8</gwtPluginVersion>
+    <gwt.version>2.8.0-SNAPSHOT</gwt.version>
+    <gwt.plugin.version>2.8.0-SNAPSHOT</gwt.plugin.version>
     <!-- GWT needs at least java 1.6 -->
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
@@ -27,7 +27,7 @@
       <dependency>
         <groupId>com.google.gwt</groupId>
         <artifactId>gwt</artifactId>
-        <version>${gwtVersion}</version>
+        <version>${gwt.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -188,7 +188,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>gwt-maven-plugin</artifactId>
-        <version>${gwtPluginVersion}</version>
+        <version>${gwt.plugin.version}</version>
         <executions>
           <execution>
             <goals>
