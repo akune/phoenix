@@ -113,8 +113,9 @@ public class DefaultObjectStore<T extends Identifiable<I>, I> implements ObjectS
 	@Override
 	public void remove(T object) {
 		objectsLock.writeLock().lock();
-		objects.remove(object);
-		invokeObjectRemovedListener(object);
+		if (objects.remove(object.getId()) != null) {
+			invokeObjectRemovedListener(object);
+		}
 		objectsLock.writeLock().unlock();
 	}
 
@@ -203,5 +204,15 @@ public class DefaultObjectStore<T extends Identifiable<I>, I> implements ObjectS
 	@Override
 	public String generateId() {
 		return format("%025d", sequence.getAndIncrement());
+	}
+
+	@Override
+	public T any() {
+		objectsLock.readLock().lock();
+		try {
+			return objects.values().isEmpty() ? null : objects.values().iterator().next();
+		} finally {
+			objectsLock.readLock().unlock();
+		}
 	}
 }

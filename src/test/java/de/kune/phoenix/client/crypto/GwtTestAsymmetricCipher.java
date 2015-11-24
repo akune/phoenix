@@ -9,17 +9,23 @@ import de.kune.phoenix.client.crypto.KeyPair.PublicExponent;
 
 public class GwtTestAsymmetricCipher extends AsyncGwtTestBase {
 
+	private static final String ENCODED_PRIVATE_KEY = "EhS6fbossf/H62OOgyICUczUGMXPuoPj"
+			+ "nLmVFNPQmYNAWB0V1YPqyZzTBcMaAesyF54ayEc1oCuJzaCn/iCBA6yl3kIzE28e3kbUUXyr"
+			+ "ENh2jVo8Skyruc1sGk8ZP4+AwvFGrOr33UPLllezHcuRNw==";
+	private static final String ENCODED_PUBLIC_KEY = "frH6VoWnODHbgI+1RTEeUD3CVE8FYXwlg"
+			+ "HyOV/5QBhFDZ8K6SoYQUvrEHyHzwu0jLLLyUHZQBMP8f5ouxNVxXg==";
+
 	@Override
 	public String getModuleName() {
 		return "de.kune.phoenix.mainjunit";
 	}
-	
+
 	public void testWithGivenKeyPairBitPadding() {
 		delayTestFinish(120000);
 		CipherSuite.init(new TestCallback<Void, Exception>() {
 			protected void handleSuccess(Void nothing) {
 				final AsymmetricCipher cipher = AsymmetricCipher.Factory.createCipher(MessageFormat.BitPadding);
-				final KeyPair keyPair = AsymmetricCipher.Factory.createKeyPair("frH6VoWnODHbgI+1RTEeUD3CVE8FYXwlgHyOV/5QBhFDZ8K6SoYQUvrEHyHzwu0jLLLyUHZQBMP8f5ouxNVxXg==", "EhS6fbossf/H62OOgyICUczUGMXPuoPjnLmVFNPQmYNAWB0V1YPqyZzTBcMaAesyF54ayEc1oCuJzaCn/iCBA6yl3kIzE28e3kbUUXyrENh2jVo8Skyruc1sGk8ZP4+AwvFGrOr33UPLllezHcuRNw==");
+				final KeyPair keyPair = AsymmetricCipher.Factory.createKeyPair(ENCODED_PUBLIC_KEY, ENCODED_PRIVATE_KEY);
 				doTest(cipher, keyPair.getPrivateKey(), keyPair.getPublicKey(), "Plain Text");
 			}
 		});
@@ -30,12 +36,11 @@ public class GwtTestAsymmetricCipher extends AsyncGwtTestBase {
 		CipherSuite.init(new TestCallback<Void, Exception>() {
 			protected void handleSuccess(Void nothing) {
 				final AsymmetricCipher cipher = AsymmetricCipher.Factory.createCipher(MessageFormat.SOAEP);
-				final KeyPair keyPair = AsymmetricCipher.Factory.createKeyPair("frH6VoWnODHbgI+1RTEeUD3CVE8FYXwlgHyOV/5QBhFDZ8K6SoYQUvrEHyHzwu0jLLLyUHZQBMP8f5ouxNVxXg==", "EhS6fbossf/H62OOgyICUczUGMXPuoPjnLmVFNPQmYNAWB0V1YPqyZzTBcMaAesyF54ayEc1oCuJzaCn/iCBA6yl3kIzE28e3kbUUXyrENh2jVo8Skyruc1sGk8ZP4+AwvFGrOr33UPLllezHcuRNw==");
+				final KeyPair keyPair = AsymmetricCipher.Factory.createKeyPair(ENCODED_PUBLIC_KEY, ENCODED_PRIVATE_KEY);
 				doTest(cipher, keyPair.getPrivateKey(), keyPair.getPublicKey(), "Plain Text");
 			}
 		});
 	}
-
 
 	public void testWithGeneratedKeyPairWeakestKeyStrengthSmallestExponentSoaepPadding() {
 		delayTestFinish(120000);
@@ -58,7 +63,7 @@ public class GwtTestAsymmetricCipher extends AsyncGwtTestBase {
 			}
 		});
 	}
-	
+
 	public void testWithGeneratedKeyPairStrongKeyStrengthSmallestExponentSoaepPadding() {
 		delayTestFinish(120000);
 		CipherSuite.init(new TestCallback<Void, Exception>(false) {

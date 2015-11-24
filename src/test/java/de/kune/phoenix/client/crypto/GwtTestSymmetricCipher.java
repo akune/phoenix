@@ -13,6 +13,8 @@ import de.kune.phoenix.client.crypto.SecretKey.KeyStrength;
 
 public class GwtTestSymmetricCipher extends AsyncGwtTestBase {
 
+	private static final String ENCODED_SECRET_KEY = "AupyROrgqnkRZRiHGQXTkdoTcWj+8W1NBkfd311kmFk=";
+
 	@Override
 	public String getModuleName() {
 		return "de.kune.phoenix.mainjunit";
@@ -29,7 +31,8 @@ public class GwtTestSymmetricCipher extends AsyncGwtTestBase {
 						for (BlockCipherMode blockCipherMode : BlockCipherMode.values()) {
 							for (Padding padding : Padding.values()) {
 								try {
-									SymmetricCipher cipher = SymmetricCipher.Factory.createCipher(algorithm, blockCipherMode, padding);
+									SymmetricCipher cipher = SymmetricCipher.Factory.createCipher(algorithm,
+											blockCipherMode, padding);
 									doTestCipher(cipher, secretKey);
 								} catch (Throwable t) {
 									fail("algorithm=" + algorithm + ", key strength=" + keyStrength
@@ -49,8 +52,9 @@ public class GwtTestSymmetricCipher extends AsyncGwtTestBase {
 		CipherSuite.init(new TestCallback<Void, Exception>() {
 			@Override
 			protected void handleSuccess(Void result) {
-				SecretKey secretKey = SymmetricCipher.Factory.createSecretKey("AupyROrgqnkRZRiHGQXTkdoTcWj+8W1NBkfd311kmFk=");
-				SymmetricCipher cipher = SymmetricCipher.Factory.createCipher(Algorithm.RIJNDAEL, BlockCipherMode.ECB, Padding.PKCS7);
+				SecretKey secretKey = SymmetricCipher.Factory.createSecretKey(ENCODED_SECRET_KEY);
+				SymmetricCipher cipher = SymmetricCipher.Factory.createCipher(Algorithm.RIJNDAEL, BlockCipherMode.ECB,
+						Padding.PKCS7);
 				doTestCipher(cipher, secretKey);
 			}
 		});

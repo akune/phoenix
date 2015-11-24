@@ -1,12 +1,16 @@
 package de.kune.phoenix.server;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import org.junit.Test;
 
@@ -15,12 +19,28 @@ import de.kune.phoenix.shared.Identifiable;
 
 public class ObjectStoreTest {
 
+	public static class RandomTestIdentifiable extends TestIdentifiable {
+		private static final Random RANDOM = new Random();
+
+		public RandomTestIdentifiable() {
+			super(RANDOM.nextLong());
+		}
+	}
+
 	public static class TestIdentifiable implements Identifiable<Long> {
+
+		private static final AtomicLong GENERATOR = new AtomicLong();
 
 		private final Long id;
 
 		public TestIdentifiable(Long id) {
-			this.id = id;
+			// this.id = id;
+			this.id = GENERATOR.getAndIncrement();
+		}
+
+		public TestIdentifiable() {
+			// this.id = id;
+			this.id = GENERATOR.getAndIncrement();
 		}
 
 		@Override
@@ -37,20 +57,25 @@ public class ObjectStoreTest {
 		final AtomicLong updated = new AtomicLong();
 		final ObjectStore<TestIdentifiable> store = new DefaultObjectStore<TestIdentifiable, Long>();
 		store.addListener(t -> true, countingListener(added, removed, updated));
-		fill(store, 500);
-		ExecutorService addExecutor = addObjects(store, 500);
-		ExecutorService removeExecutor = removeObjects(store, 250);
-		ExecutorService updateExecutor = updateObjects(store, 250);
+		final int initial = 5000;
+		final int add = 500;
+		final int update = 250;
+		final int remove = 250;
+		fill(store, initial);
+		assertThat(store.get().size()).isEqualTo(initial);
+		ExecutorService addExecutor = execute(store, add, store::add, TestIdentifiable::new);
+		ExecutorService updateExecutor = execute(store, update, store::update, store::any);
+		ExecutorService removeExecutor = execute(store, remove, store::remove, store::any);
 		try {
 			addExecutor.awaitTermination(30, TimeUnit.SECONDS);
-			removeExecutor.awaitTermination(30, TimeUnit.SECONDS);
 			updateExecutor.awaitTermination(30, TimeUnit.SECONDS);
+			removeExecutor.awaitTermination(30, TimeUnit.SECONDS);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		assertEquals(1000L, added.get());
-		assertEquals(250L, removed.get());
-		assertEquals(250L, updated.get());
+		assertThat(added.get()).isEqualTo(initial + add + update - updated.get());
+		assertThat(removed.get()).isGreaterThan(0).isLessThan(remove + 1);
+		assertThat(updated.get()).isGreaterThan(0).isLessThan(update + 1);
 	}
 
 	private ObjectStoreListener<TestIdentifiable> countingListener(final AtomicLong added, final AtomicLong removed,
@@ -79,9 +104,8 @@ public class ObjectStoreTest {
 		}
 	}
 
-	@Test
+	@Test(timeout = 1000)
 	public void awaitSingleThreadAccess() {
-		final Long reference = System.currentTimeMillis();
 		final ObjectStore<TestIdentifiable> store = new DefaultObjectStore<TestIdentifiable, Long>();
 		new Thread() {
 			public void run() {
@@ -93,38 +117,23 @@ public class ObjectStoreTest {
 				store.add(new TestIdentifiable(System.currentTimeMillis()));
 			}
 		}.start();
-		store.await(t -> (reference < t.getId()));
+		Set<TestIdentifiable> result = store.await(t -> true);
+		assertThat(result).isNotEmpty();
 	}
 
-	@Test
+	@Test(timeout = 15000)
 	public void awaitMultipleThreadAccess() {
-		final Long reference = 0L;
 		final ObjectStore<TestIdentifiable> store = new DefaultObjectStore<TestIdentifiable, Long>();
-		addObjects(store, 500);
+		final AtomicLong id = new AtomicLong();
+		execute(store, 500, store::add, () -> new TestIdentifiable(id.getAndIncrement()));
 		while (store.get().size() < 500) {
-			store.await(t -> (reference < t.getId()));
+			assertThat(store.await(t -> true)).isNotEmpty();
 		}
+		assertThat(store.get().size()).isEqualTo(500);
 	}
 
-	private ExecutorService addObjects(final ObjectStore<TestIdentifiable> store, int count) {
-		ExecutorService executor = Executors.newCachedThreadPool();
-		for (int i = 0; i < count; i++) {
-			final Long number = (long) i;
-			executor.submit(() -> {
-				try {
-					Thread.sleep(500 + (int) (Math.random() * 500));
-				} catch (InterruptedException e) {
-				}
-				store.add(new TestIdentifiable(number));
-				return null;
-			});
-		}
-		noise(store, executor, 100);
-		executor.shutdown();
-		return executor;
-	}
-
-	private ExecutorService removeObjects(final ObjectStore<TestIdentifiable> store, int count) {
+	private ExecutorService execute(final ObjectStore<TestIdentifiable> store, int count,
+			Consumer<TestIdentifiable> consumer, Supplier<TestIdentifiable> supplier) {
 		ExecutorService executor = Executors.newCachedThreadPool();
 		for (int i = 0; i < count; i++) {
 			executor.submit(() -> {
@@ -132,24 +141,9 @@ public class ObjectStoreTest {
 					Thread.sleep(500 + (int) (Math.random() * 500));
 				} catch (InterruptedException e) {
 				}
-				store.remove(store.get().iterator().next());
-				return null;
-			});
-		}
-		noise(store, executor, 100);
-		executor.shutdown();
-		return executor;
-	}
-
-	private ExecutorService updateObjects(final ObjectStore<TestIdentifiable> store, int count) {
-		ExecutorService executor = Executors.newCachedThreadPool();
-		for (int i = 0; i < count; i++) {
-			executor.submit(() -> {
-				try {
-					Thread.sleep(500 + (int) (Math.random() * 500));
-				} catch (InterruptedException e) {
-				}
-				store.update(store.get().iterator().next());
+				TestIdentifiable element = supplier.get();
+				assertThat(element).isNotNull();
+				consumer.accept(element);
 			});
 		}
 		noise(store, executor, 100);

@@ -26,6 +26,8 @@ public interface ObjectStore<T extends Identifiable<?>> {
 	void remove(Predicate<T> predicate);
 
 	void remove(T object);
+	
+	T any();
 
 	void addListener(Predicate<T> predicate, ObjectStoreListener<T> listener);
 
