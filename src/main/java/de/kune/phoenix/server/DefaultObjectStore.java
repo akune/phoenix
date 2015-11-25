@@ -210,7 +210,7 @@ public class DefaultObjectStore<T extends Identifiable<I>, I> implements ObjectS
 	public T any() {
 		objectsLock.readLock().lock();
 		try {
-			return objects.values().isEmpty() ? null : objects.values().iterator().next();
+			return objects.values().stream().findAny().orElse(null);
 		} finally {
 			objectsLock.readLock().unlock();
 		}
