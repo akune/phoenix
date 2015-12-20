@@ -299,32 +299,32 @@ public class MessageService {
 			final Callback<Collection<Message>, String> callback) {
 		Defaults.setDateFormat(null);
 		final MessagesCodec messageCodec = GWT.create(MessagesCodec.class);
-		MessageService.EventSource.connect("es", new EventSourceHandler() {
-			@Override
-			public void handleOpen(EventSource es) {
-			}
-
-			@Override
-			public void handleMessage(EventSource es, String messageType, String message) {
-				JSONValue json = JSONParser.parseStrict(message);
-				GWT.log("--> array: " + json.isArray().toString());
-				JSONArray jsonArray = json.isArray();
-				Set<Message> result = new LinkedHashSet<Message>();
-				for (int i = 0; i < jsonArray.size(); i++) {
-					result.add(messageCodec.decode(jsonArray.get(i)));
-				}
-				callback.onSuccess(result);
-			}
-
-			@Override
-			public void handleClose(EventSource es) {
-			}
-
-			@Override
-			public void handleError(EventSource es, String messageType, String message) {
-				callback.onFailure(message);
-			}
-		});
+//		MessageService.EventSource.connect("es", new EventSourceHandler() {
+//			@Override
+//			public void handleOpen(EventSource es) {
+//			}
+//
+//			@Override
+//			public void handleMessage(EventSource es, String messageType, String message) {
+//				JSONValue json = JSONParser.parseStrict(message);
+//				GWT.log("--> array: " + json.isArray().toString());
+//				JSONArray jsonArray = json.isArray();
+//				Set<Message> result = new LinkedHashSet<Message>();
+//				for (int i = 0; i < jsonArray.size(); i++) {
+//					result.add(messageCodec.decode(jsonArray.get(i)));
+//				}
+//				callback.onSuccess(result);
+//			}
+//
+//			@Override
+//			public void handleClose(EventSource es) {
+//			}
+//
+//			@Override
+//			public void handleError(EventSource es, String messageType, String message) {
+//				callback.onFailure(message);
+//			}
+//		});
 	}
 
 }
