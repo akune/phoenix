@@ -26,7 +26,7 @@ public class MessageResource {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response post(Message message) {
-		message.setTransmission(messageStore.generateId());
+		message.setSequenceKey(messageStore.generateId());
 		messageStore.add(message);
 		return Response.status(200).build();
 	}
@@ -56,7 +56,7 @@ public class MessageResource {
 				|| contains(message.getRecipientIds(), recipientId))
 				&& (conversationId == message.getConversationId()
 						|| conversationId != null && conversationId.equals(message.getConversationId()))
-				&& (lastTransmission == null || lastTransmission.compareTo(message.getTransmission()) < 0);
+				&& (lastTransmission == null || lastTransmission.compareTo(message.getSequenceKey()) < 0);
 	}
 
 }

@@ -75,10 +75,11 @@ public class Message implements Identifiable<String> {
 	 */
 	private byte[] signature;
 	/**
-	 * The time stamp when this message was received by the first transmitting
-	 * server node.
+	 * The sequence key string. An element of a ascending sequence strictly
+	 * ordering all messages received by a certain node.
+	 * TODO: Consider using message chaining instead. 
 	 */
-	private String transmission;
+	private String sequenceKey;
 
 	public Message() {
 		this.id = Base64Utils.encode(Identifiable.generateId(32));
@@ -156,12 +157,12 @@ public class Message implements Identifiable<String> {
 		this.signature = signature;
 	}
 
-	public String getTransmission() {
-		return transmission;
+	public String getSequenceKey() {
+		return sequenceKey;
 	}
 
-	public void setTransmission(String transmission) {
-		this.transmission = transmission;
+	public void setSequenceKey(String transmission) {
+		this.sequenceKey = transmission;
 	}
 
 	private Cipher getEncryptionCipher(Key key) {
@@ -247,7 +248,7 @@ public class Message implements Identifiable<String> {
 		return "Message [id=" + id + ", senderId=" + senderId + ", conversationId=" + conversationId + ", recipientIds="
 				+ Arrays.toString(recipientIds) + ", keyId=" + keyId + ", messageType=" + messageType + ", content="
 				+ Base64Utils.encode(content) + ", timestamp=" + timestamp + ", signature="
-				+ Base64Utils.encode(signature) + ", transmission=" + transmission + "]";
+				+ Base64Utils.encode(signature) + ", transmission=" + sequenceKey + "]";
 	}
 
 }

@@ -1,9 +1,7 @@
 package de.kune.phoenix.client.messaging;
 
 import java.util.Collection;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -21,11 +19,7 @@ import org.fusesource.restygwt.client.RestService;
 import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.json.client.JSONArray;
-import com.google.gwt.json.client.JSONParser;
-import com.google.gwt.json.client.JSONValue;
 
-import de.kune.phoenix.client.messaging.MessageService.EventSource.EventSourceHandler;
 import de.kune.phoenix.shared.Message;
 
 public class MessageService {

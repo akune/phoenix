@@ -65,12 +65,12 @@ public class EventSourceServlet extends HttpServlet {
 //								|| contains(subscribedConversations, message.getConversationId()) 
 								|| contains(message.getRecipientIds(), recipientId))
 								&& (lastTransmission == null
-										|| lastTransmission.compareTo(message.getTransmission()) < 0);
+										|| lastTransmission.compareTo(message.getSequenceKey()) < 0);
 					}
 				});
 				for (Message message : messages) {
-					if (lastTransmission == null || lastTransmission.compareTo(message.getTransmission()) < 0) {
-						lastTransmission = message.getTransmission();
+					if (lastTransmission == null || lastTransmission.compareTo(message.getSequenceKey()) < 0) {
+						lastTransmission = message.getSequenceKey();
 					}
 				}
 				try {

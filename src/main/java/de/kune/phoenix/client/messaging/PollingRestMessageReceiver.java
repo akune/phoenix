@@ -38,11 +38,11 @@ public class PollingRestMessageReceiver {
 			};
 			GWT.log("Querying for messages with transmission greater than "
 					+ (decryptorSession.getLastProcessedObject() == null ? null
-							: decryptorSession.getLastProcessedObject().getTransmission())
+							: decryptorSession.getLastProcessedObject().getSequenceKey())
 					+ ", receiverId=" + receiverId + ", conversationId=" + conversationId);
 			messageService.get(false,
 					decryptorSession.getLastProcessedObject() == null ? null
-							: decryptorSession.getLastProcessedObject().getTransmission(),
+							: decryptorSession.getLastProcessedObject().getSequenceKey(),
 					receiverId, conversationId, messageHandler);
 		}
 	};
