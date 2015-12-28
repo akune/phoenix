@@ -6,6 +6,4 @@ public interface Processor<T> {
 
 	void process(Collection<T> object);
 	
-	T getLastProcessedObject();
-	
 }

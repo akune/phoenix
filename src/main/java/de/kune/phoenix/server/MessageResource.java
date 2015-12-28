@@ -2,6 +2,7 @@ package de.kune.phoenix.server;
 
 import static de.kune.phoenix.server.util.ArrayUtils.contains;
 
+import java.util.List;
 import java.util.function.Predicate;
 
 import javax.inject.Inject;
@@ -25,23 +26,33 @@ public class MessageResource {
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response post(Message message) {
-		message.setSequenceKey(messageStore.generateId());
-		messageStore.add(message);
+	public Response post(List<Message> messages) {
+		for (Message message: messages) {
+			message.setSequenceKey(messageStore.generateId());
+			messageStore.add(message);
+		}
 		return Response.status(200).build();
 	}
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response get(@QueryParam("wait") boolean wait, @QueryParam("last-transmission") String lastTransmission,
+	public Response get(@QueryParam("wait") boolean wait, @QueryParam("last-sequence-key") String lastSequenceKey,
 			@QueryParam("recipient-id") String recipientId, @QueryParam("conversation-id") String conversationId) {
 		if (wait) {
 			return Response.status(200)
-					.entity(messageStore.await(predicate(recipientId, conversationId, lastTransmission))).build();
+					.entity(messageStore.await(hasRecipient(recipientId).and(hasConversationId(conversationId)).and(wasReceivedAfter(lastSequenceKey))))
+					.build();
 		} else {
-			return Response.status(200)
-					.entity(messageStore.get(predicate(recipientId, conversationId, lastTransmission))).build();
+			return Response.status(200).entity(messageStore.get(predicate(recipientId, conversationId))).build();
 		}
+	}
+
+	private Predicate<? super Message> wasReceivedAfter(String lastSequenceKey) {
+		return m->lastSequenceKey == null || lastSequenceKey.compareTo(m.getSequenceKey()) < 0;
+	}
+
+	private Predicate<Message> hasConversationId(String conversationId) {
+		return m -> (conversationId == null || conversationId.equals(m.getConversationId()));
 	}
 
 	@DELETE
@@ -50,13 +61,14 @@ public class MessageResource {
 		return Response.status(200).build();
 	}
 
-	private Predicate<Message> predicate(final String recipientId, final String conversationId,
-			final String lastTransmission) {
+	private Predicate<Message> hasRecipient(String recipientId) {
+		return m -> (recipientId == null || contains(m.getRecipientIds(), recipientId));
+	}
+
+	private Predicate<Message> predicate(final String recipientId, final String conversationId) {
 		return (message) -> (recipientId == null || message.getRecipientIds() == null
 				|| contains(message.getRecipientIds(), recipientId))
-				&& (conversationId == message.getConversationId()
-						|| conversationId != null && conversationId.equals(message.getConversationId()))
-				&& (lastTransmission == null || lastTransmission.compareTo(message.getSequenceKey()) < 0);
+				&& (conversationId == null || conversationId.equals(message.getConversationId()));
 	}
 
 }

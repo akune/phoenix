@@ -215,4 +215,8 @@ public class DefaultObjectStore<T extends Identifiable<I>, I> implements ObjectS
 			objectsLock.readLock().unlock();
 		}
 	}
+	
+	public String toString() {
+		return getClass().getName() + objects.toString();
+	}
 }

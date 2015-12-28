@@ -1,4 +1,4 @@
-package de.kune.phoenix.client.crypto;
+package de.kune.phoenix.client.crypto.keystore;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -8,7 +8,12 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class SimpleKeyStore implements MutableKeyStore {
+import de.kune.phoenix.client.crypto.Key;
+import de.kune.phoenix.client.crypto.KeyPair;
+import de.kune.phoenix.client.crypto.PublicKey;
+import de.kune.phoenix.client.crypto.SecretKey;
+
+public class SimpleKeyStore implements ModifiableKeyStore {
 
 	private Map<String, SecretKey> secretKeys = new LinkedHashMap<String, SecretKey>();
 	private Map<String, PublicKey> publicKeys = new HashMap<String, PublicKey>();

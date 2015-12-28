@@ -28,6 +28,11 @@ public class Message implements Identifiable<String> {
 		SECRET_KEY,
 
 		/**
+		 * Public key message.
+		 */
+		PUBLIC_KEY,
+
+		/**
 		 * Invitation message.
 		 */
 		INVITATION,
@@ -76,13 +81,13 @@ public class Message implements Identifiable<String> {
 	private byte[] signature;
 	/**
 	 * The sequence key string. An element of a ascending sequence strictly
-	 * ordering all messages received by a certain node.
-	 * TODO: Consider using message chaining instead. 
+	 * ordering all messages received by a certain node. TODO: Consider using
+	 * message chaining instead.
 	 */
 	private String sequenceKey;
 
 	public Message() {
-		this.id = Base64Utils.encode(Identifiable.generateId(32));
+		this.id = Identifiable.generateStringId(32);
 	}
 
 	public String getId() {
@@ -245,8 +250,8 @@ public class Message implements Identifiable<String> {
 
 	@Override
 	public String toString() {
-		return "Message [id=" + id + ", senderId=" + senderId + ", conversationId=" + conversationId + ", recipientIds="
-				+ Arrays.toString(recipientIds) + ", keyId=" + keyId + ", messageType=" + messageType + ", content="
+		return "Message[" + messageType + "] [id=" + id + ", senderId=" + senderId + ", conversationId="
+				+ conversationId + ", recipientIds=" + Arrays.toString(recipientIds) + ", keyId=" + keyId + ", content="
 				+ Base64Utils.encode(content) + ", timestamp=" + timestamp + ", signature="
 				+ Base64Utils.encode(signature) + ", transmission=" + sequenceKey + "]";
 	}

@@ -1,9 +1,5 @@
 package de.kune.phoenix.client;
 
-import static com.google.gwt.i18n.client.DateTimeFormat.getFormat;
-import static com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat.DATE_TIME_MEDIUM;
-import static java.util.Arrays.asList;
-
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,6 +14,7 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.http.client.URL;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -36,14 +33,11 @@ import de.kune.phoenix.client.crypto.KeyPair;
 import de.kune.phoenix.client.crypto.KeyPair.PublicExponent;
 import de.kune.phoenix.client.crypto.PublicKey;
 import de.kune.phoenix.client.messaging.ClientSession;
-import de.kune.phoenix.client.messaging.ConversationSession;
-import de.kune.phoenix.client.messaging.InvitationCallback;
-import de.kune.phoenix.client.messaging.MessageCallback;
-import de.kune.phoenix.shared.Message;
+import de.kune.phoenix.client.messaging.Conversation;
 
 public class Main implements EntryPoint {
 
-	private ConversationSession selectedConversationSession;
+	// private ConversationSession selectedConversationSession;
 
 	private Panel mainPanel;
 	private Panel avatarPanel;
@@ -89,6 +83,12 @@ public class Main implements EntryPoint {
 		return label;
 	}
 
+	private void handleNewConversation(Conversation.Builder builder) {
+		getConversationAvatarPanel(builder.getConversationId());
+		Panel panel = getChatPanel(builder.getConversationId());
+		builder.receivedMessageHandler((m, c) -> speak(panel, new String(c), Position.LEFT));
+	}
+
 	public void onModuleLoad() {
 		// es.subscribe("somestuff");
 		// MessageService.WebSocket.connect("ws://echo.websocket.org/", new
@@ -124,6 +124,7 @@ public class Main implements EntryPoint {
 		avatarPanel.setStyleName("avatar-panel");
 		mainPanel.add(avatarPanel);
 		getConversationAvatarPanel("system").addStyleName("selected");
+		getChatPanel("system").setVisible(true);
 		speakPanel = new FlowPanel();
 		speakPanel.setStyleName("speak-panel");
 		mainPanel.add(speakPanel);
@@ -132,26 +133,28 @@ public class Main implements EntryPoint {
 		phoenixAvatar.setWidth("128px");
 		mainPanel.add(phoenixAvatar);
 
-		TextBox speakBox = new TextBox();
-		speakBox.getElement().setAttribute("placeholder", "Message");
-		speakPanel.add(speakBox);
-		speakBox.addKeyUpHandler(new KeyUpHandler() {
-
-			@Override
-			public void onKeyUp(KeyUpEvent event) {
-				if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-					String text = ((TextBox) event.getSource()).getText();
-					// speak(text, Position.RIGHT);
-					((TextBox) event.getSource()).setText("");
-					selectedConversationSession.send(text);
-				}
-			}
-		});
+		// TextBox speakBox = new TextBox();
+		// speakBox.getElement().setAttribute("placeholder", "Message");
+		// speakPanel.add(speakBox);
+		// speakBox.addKeyUpHandler(new KeyUpHandler() {
+		//
+		// @Override
+		// public void onKeyUp(KeyUpEvent event) {
+		// if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
+		// String text = ((TextBox) event.getSource()).getText();
+		// // speak(text, Position.RIGHT);
+		// ((TextBox) event.getSource()).setText("");
+		// // selectedConversationSession.send(text);
+		// }
+		// }
+		// });
 
 		// speak("Welcome to Phoenix!", Position.LEFT);
 		// final Label initializingLabel = speak("Initializing Cipher Suite...",
 		// Position.LEFT);
 		CipherSuite.init(new Callback<Void, Exception>() {
+			private Conversation conversation;
+
 			@Override
 			public void onFailure(Exception reason) {
 			}
@@ -168,7 +171,12 @@ public class Main implements EntryPoint {
 							URL.decodePathSegment(Window.Location.getParameter("priv")));
 					speak(getChatPanel("system"), keyPair.getPublicKey(), "Public key: ", Position.LEFT);
 					speak(getChatPanel("system"), keyPair.getPrivateKey(), "Private key: ", Position.LEFT);
-					beginClientSession(keyPair);
+					// beginClientSession(keyPair);
+					clientSession = ClientSession.builder().keyPair(keyPair)
+							.conversationInitiationHandler(c -> handleNewConversation(c)).build();
+					// Conversation conversation =
+					// clientSession.startConversation();
+					speak(getChatPanel("system"), createInvitePanel(keyPair), Position.LEFT);
 				} else {
 					final Label keyPairMessage = speak(getChatPanel("system"), "Generating key pair...", Position.LEFT);
 					AsymmetricCipher.Factory.generateKeyPairAsync(KeyPair.KeyStrength.MEDIUM, PublicExponent.SMALLEST,
@@ -180,16 +188,18 @@ public class Main implements EntryPoint {
 						}
 
 						@Override
-						public void onSuccess(KeyPair result) {
+						public void onSuccess(KeyPair keyPair) {
 							keyPairMessage.setText(keyPairMessage.getText() + "done");
 							Anchor link = new Anchor("Use your new key pair");
 							link.setHref(com.google.gwt.core.client.GWT.getHostPageBaseURL() + "?priv="
-									+ URL.encodePathSegment(result.getPrivateKey().getEncodedKey()) + "&pub="
-									+ URL.encodePathSegment(result.getPublicKey().getEncodedKey()));
+									+ URL.encodePathSegment(keyPair.getPrivateKey().getEncodedKey()) + "&pub="
+									+ URL.encodePathSegment(keyPair.getPublicKey().getEncodedKey()));
 							speak(getChatPanel("system"), link, Position.LEFT);
-							speak(getChatPanel("system"), result.getPublicKey(), "Public key: ", Position.LEFT);
-							speak(getChatPanel("system"), result.getPrivateKey(), "Private key: ", Position.LEFT);
-							beginClientSession(result);
+							speak(getChatPanel("system"), keyPair.getPublicKey(), "Public key: ", Position.LEFT);
+							speak(getChatPanel("system"), keyPair.getPrivateKey(), "Private key: ", Position.LEFT);
+							// beginClientSession(result);
+							clientSession = ClientSession.builder().keyPair(keyPair)
+									.conversationInitiationHandler(c -> handleNewConversation(c)).build();
 						}
 
 					}, new Callback<Integer, Void>() {
@@ -217,59 +227,81 @@ public class Main implements EntryPoint {
 		Panel chatPanel = chatPanels.get(conversationId);
 		if (chatPanel == null) {
 			chatPanel = new FlowPanel();
+			chatPanel.setVisible(false);
 			chatPanel.setStyleName("chat-panel");
 			mainPanel.add(chatPanel);
 			chatPanels.put(conversationId, chatPanel);
-		}
-		return chatPanel;
-	}
-
-	private Map<String, ConversationSession> conversationSessions = new HashMap<String, ConversationSession>();
-
-	private void beginClientSession(final KeyPair keyPair) {
-		clientSession = new ClientSession(keyPair, asList(keyPair.getPublicKey()));
-
-		speak(getChatPanel("system"), createInvitePanel(keyPair), Position.LEFT);
-		// speak(importPublicKeyPanel(), Position.LEFT);
-
-		GWT.log("starting client session");
-		clientSession.start(new InvitationCallback() {
-			@Override
-			public void handleInvitation(final ConversationSession conversation) {
-
-				getConversationAvatarPanel(conversation.getId());
-				final Panel chatPanel = getChatPanel(conversation.getId());
-				chatPanel.setVisible(false);
-
-				conversationSessions.put(conversation.getId(), conversation);
-
-				conversation.start(new MessageCallback() {
+			if (!conversationId.equals("system")) {
+				TextBox speakBox = new TextBox();
+				speakBox.getElement().setAttribute("placeholder", "Message");
+				chatPanel.add(speakBox);
+				speakBox.addKeyUpHandler(new KeyUpHandler() {
 
 					@Override
-					public void handleReceivedMessage(Message message, byte[] content) {
-						try {
-							String messageString = new String(content, "UTF-8");
-							Label bubble;
-							if (conversation.isSender(message.getSenderId())) {
-								bubble = speak(chatPanel, messageString, Position.RIGHT);
-							} else {
-								bubble = speak(chatPanel, messageString, Position.LEFT);
-							}
-							bubble.setTitle(getFormat(DATE_TIME_MEDIUM).format(message.getTimestamp()));
-							bubble.getElement().setId(message.getId());
-						} catch (UnsupportedEncodingException e) {
-							throw new IllegalStateException(e);
+					public void onKeyUp(KeyUpEvent event) {
+						if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
+							String text = ((TextBox) event.getSource()).getText();
+							// speak(text, Position.RIGHT);
+							((TextBox) event.getSource()).setText("");
+							Conversation conversation = clientSession.getConversation(conversationId);
+							conversation.send(text);
 						}
 					}
 				});
 			}
-
-		});
+		}
+		return chatPanel;
 	}
+
+	// private Map<String, ConversationSession> conversationSessions = new
+	// HashMap<String, ConversationSession>();
+
+	// private void beginClientSession(final KeyPair keyPair) {
+	// clientSession = new ClientSession(keyPair,
+	// asList(keyPair.getPublicKey()));
+	//
+	// speak(getChatPanel("system"), createInvitePanel(keyPair), Position.LEFT);
+	// // speak(importPublicKeyPanel(), Position.LEFT);
+	//
+	// GWT.log("starting client session");
+	// clientSession.start(new InvitationCallback() {
+	// @Override
+	// public void handleInvitation(final ConversationSession conversation) {
+	//
+	// getConversationAvatarPanel(conversation.getId());
+	// final Panel chatPanel = getChatPanel(conversation.getId());
+	// chatPanel.setVisible(false);
+	//
+	// conversationSessions.put(conversation.getId(), conversation);
+	//
+	// conversation.start(new MessageHandler() {
+	//
+	// @Override
+	// public void handleReceivedMessage(Message message, byte[] content) {
+	// try {
+	// String messageString = new String(content, "UTF-8");
+	// Label bubble;
+	// if (conversation.isSender(message.getSenderId())) {
+	// bubble = speak(chatPanel, messageString, Position.RIGHT);
+	// } else {
+	// bubble = speak(chatPanel, messageString, Position.LEFT);
+	// }
+	// bubble.setTitle(getFormat(DATE_TIME_MEDIUM).format(message.getTimestamp()));
+	// bubble.getElement().setId(message.getId());
+	// } catch (UnsupportedEncodingException e) {
+	// throw new IllegalStateException(e);
+	// }
+	// }
+	// });
+	// }
+	//
+	// });
+	// }
 
 	private Map<String, Panel> conversationAvatarPanels = new HashMap<String, Panel>();
 
 	private Panel getConversationAvatarPanel(final String conversationId) {
+		GWT.log("new conversation: " + conversationId);
 		Panel conversationPanel = conversationAvatarPanels.get(conversationId);
 		if (conversationPanel == null) {
 			conversationPanel = new FlowPanel();
@@ -300,7 +332,8 @@ public class Main implements EntryPoint {
 							e.getValue().setVisible(false);
 						}
 					}
-					selectedConversationSession = conversationSessions.get(conversationId);
+					// selectedConversationSession =
+					// conversationSessions.get(conversationId);
 					// GWT.log("Current conversation: " +
 					// selectedConversationSession.getId());
 				}
@@ -314,6 +347,8 @@ public class Main implements EntryPoint {
 		invitePanel.add(new Label("Invite: "));
 		final TextBox publicKeyTextBox = new TextBox();
 		publicKeyTextBox.getElement().setAttribute("placeholder", "Public Key");
+		publicKeyTextBox.setText(
+				"OoKooIqK7J2Pccr7ERP/9BDgJDHDfdCTqbQAPaYMj0YmG9oA4Q3TofBDRMq4gpkTvCrxXuAY/qHpNEbxgMqTlfeXyPN7HT4UrmavHidnMVqgXAuSxX1Kmw6ThJoy5UEVdcrBdc0BSkaQjoni32XG0zOnEOvGPdswxVkbKydc5Y5+X7lsAFJZA6FpFdPAIoYanXTgMp39re3HhAYDkJmsgQ==");
 		invitePanel.add(publicKeyTextBox);
 		publicKeyTextBox.addKeyUpHandler(new KeyUpHandler() {
 			@Override
@@ -321,9 +356,17 @@ public class Main implements EntryPoint {
 				if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER && !publicKeyTextBox.getText().isEmpty()) {
 					PublicKey publicKey = AsymmetricCipher.Factory.createPublicKey(publicKeyTextBox.getText());
 					GWT.log("Inviting " + publicKey.getId());
-					selectedConversationSession = clientSession
-							.beginConversation(asList(keyPair.getPublicKey().getId()));
-					selectedConversationSession.invite(publicKey);
+					Conversation conversation = clientSession.startConversation();
+					conversation.introduce(publicKey);
+					new Timer() {
+						@Override
+						public void run() {
+							conversation.send("Hello");
+						}
+					}.schedule(1000);
+					// selectedConversationSession = clientSession
+					// .beginConversation(asList(keyPair.getPublicKey().getId()));
+					// selectedConversationSession.invite(publicKey);
 				}
 			}
 		});

@@ -9,15 +9,18 @@ public interface Cipher {
 
 	abstract class EncodedKey implements Key {
 		private final String encodedKey;
+		public EncodedKey(byte[] plainKey) {
+			this.encodedKey = Base64Utils.encode(plainKey);
+		}
 		public EncodedKey(String encodedKey) {
 			this.encodedKey = encodedKey;
 		}
 		@Override
-		public String getEncodedKey() {
+		public final String getEncodedKey() {
 			return encodedKey;
 		}
 		@Override
-		public byte[] getPlainKey() {
+		public final byte[] getPlainKey() {
 			return Base64Utils.decode(encodedKey);
 		}
 	}

@@ -6,24 +6,18 @@ import java.util.List;
 
 import com.google.gwt.core.client.GWT;
 
-import de.kune.phoenix.client.crypto.KeyStore;
-import de.kune.phoenix.client.messaging.PollingRestMessageReceiver.DecryptedMessageHandler;
+import de.kune.phoenix.client.crypto.keystore.KeyStore;
+import de.kune.phoenix.client.functional.MessageHandler;
 import de.kune.phoenix.shared.Message;
 
 public class MessageDecryptorSession implements Processor<Message> {
 
 	private KeyStore keyStore;
-	private DecryptedMessageHandler handler;
-	private Message lastProcessedObject;
+	private MessageHandler handler;
 
-	public MessageDecryptorSession(KeyStore keyStore, DecryptedMessageHandler handler) {
+	public MessageDecryptorSession(KeyStore keyStore, MessageHandler handler) {
 		this.keyStore = keyStore;
 		this.handler = handler;
-	}
-
-	@Override
-	public Message getLastProcessedObject() {
-		return lastProcessedObject;
 	}
 
 	public void process(Collection<Message> response) {
@@ -34,7 +28,6 @@ public class MessageDecryptorSession implements Processor<Message> {
 						+ message);
 				validateSignature(message);
 				processMessage(message);
-				lastProcessedObject = message;
 			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}
@@ -59,9 +52,9 @@ public class MessageDecryptorSession implements Processor<Message> {
 
 	private void processMessage(Message message) {
 		if (message.getKeyId() == null) {
-			handler.handleMessage(message, message.getContent());
+			handler.handleReceivedMessage(message, message.getContent());
 		} else if (keyStore.getDecryptionKey(message.getKeyId()) != null) {
-			handler.handleMessage(message, message.getDecryptedContent(keyStore.getDecryptionKey(message.getKeyId())));
+			handler.handleReceivedMessage(message, message.getDecryptedContent(keyStore.getDecryptionKey(message.getKeyId())));
 		} else {
 			throw new IllegalStateException("could not decrypt message, unknown key <" + message.getKeyId() + ">");
 		}

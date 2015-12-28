@@ -35,22 +35,33 @@ public interface AsymmetricCipher extends Cipher {
 			private final PrivateKey privateKey;
 
 			protected static class PrivateKeyImpl extends EncodedKey implements PrivateKey {
+				private final String id;
+
 				protected PrivateKeyImpl(String key) {
 					super(key);
+					id = new Sha256().feed("PRIVATE_KEY").feed(getPlainKey()).iterate(250).toBase64();
 				}
 
 				public String getId() {
-					return new Sha256().feed("PRIVATE_KEY").feed(getPlainKey()).iterate(250).toBase64();
+					return id;
 				}
 			}
 
 			protected static class PublicKeyImpl extends EncodedKey implements PublicKey {
+				final String id;
+
+				protected PublicKeyImpl(byte[] key) {
+					super(key);
+					id = new Sha256().feed("PUBLIC_KEY").feed(key).iterate(250).toBase64();
+				}
+
 				protected PublicKeyImpl(String key) {
 					super(key);
+					id = new Sha256().feed("PUBLIC_KEY").feed(getPlainKey()).iterate(250).toBase64();
 				}
 
 				public String getId() {
-					return new Sha256().feed("PUBLIC_KEY").feed(getPlainKey()).iterate(250).toBase64();
+					return id;
 				}
 			}
 
@@ -242,9 +253,13 @@ public interface AsymmetricCipher extends Cipher {
 					de.kune.phoenix.client.crypto.AsymmetricCipher.Factory.AsymmetricCipherImpl.RsaJso
 							.createRsa(messageFormat.name()));
 		}
-		
+
 		public static PublicKey createPublicKey(String encodedPublicKey) {
 			return new PublicKeyImpl(encodedPublicKey);
+		}
+		
+		public static PublicKey createPublicKey(byte[] plainPublicKey) {
+			return new PublicKeyImpl(plainPublicKey);
 		}
 
 		public static KeyPair createKeyPair(String encodedPublicKey, String encodedPrivateKey) {
