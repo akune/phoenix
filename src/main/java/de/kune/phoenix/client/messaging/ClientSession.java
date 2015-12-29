@@ -103,12 +103,12 @@ public class ClientSession {
 	}
 
 	private void handlePublicKeyMessage(Message message, byte[] data) {
-		GWT.log("received public key: " + message);
-		if (message.getMessageType() == Message.Type.PUBLIC_KEY && message.getKeyId() == null) {
+		if (message.getKeyId() == null) {
 			PublicKey extractedPublicKey = AsymmetricCipher.Factory.createPublicKey(message.getContent());
-			GWT.log("extracted public key: " + extractedPublicKey);
-			if (message.checkSignature(extractedPublicKey)) {
-				GWT.log("adding to shared public keys");
+			GWT.log("received unencrypted public key: " + extractedPublicKey.getId());
+			if (message.getSenderId().equals(extractedPublicKey.getId())
+					&& message.checkSignature(extractedPublicKey)) {
+				GWT.log("adding self-signed public key to shared public keys");
 				sharedPublicKeys.put(extractedPublicKey.getId(), extractedPublicKey);
 			}
 		}

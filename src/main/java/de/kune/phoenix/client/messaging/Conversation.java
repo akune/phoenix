@@ -6,21 +6,32 @@ import static de.kune.phoenix.client.functional.Predicate.hasType;
 import static java.util.Arrays.asList;
 
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import com.google.gwt.core.shared.GWT;
+import com.google.gwt.user.client.Timer;
 
 import de.kune.phoenix.client.crypto.AsymmetricCipher;
+import de.kune.phoenix.client.crypto.Key;
 import de.kune.phoenix.client.crypto.KeyPair;
 import de.kune.phoenix.client.crypto.PublicKey;
+import de.kune.phoenix.client.crypto.SecretKey;
+import de.kune.phoenix.client.crypto.SecretKey.KeyStrength;
+import de.kune.phoenix.client.crypto.SymmetricCipher;
 import de.kune.phoenix.client.functional.MessageHandler;
 import de.kune.phoenix.client.functional.Predicate;
 import de.kune.phoenix.shared.Message;
 
 public class Conversation {
+
+	private static final int KEY_LIFESPAN_MILLIS = 10 * 1000;
 
 	public static Builder builder() {
 		return new Builder();
@@ -75,6 +86,8 @@ public class Conversation {
 	private final MessageService messageService = MessageService.instance();
 	private final String conversationId;
 	private final Map<String, PublicKey> sharedPublicKeys;
+	private final Map<String, SecretKey> secretKeys = new HashMap<>();
+	private final Map<String, SecretKey> deprecatedSecretKeys = new HashMap<>();
 	private Set<String> participants = new HashSet<>();
 	private final MessageHandler receivedMessageHandler;
 
@@ -109,28 +122,55 @@ public class Conversation {
 
 	private void handleSecretKey(Message message, byte[] data) {
 		GWT.log("received secret key message: " + message);
-		// TODO: Decrypt message
-		// TODO: Add to secret key store
+		decrypt(message, (m, c) -> addSecretKey(SymmetricCipher.Factory.createSecretKey(c)));
+	}
+
+	private void addSecretKey(SecretKey key) {
+		secretKeys.put(key.getId(), key);
+		new Timer() {
+			@Override
+			public void run() {
+				deprecateSecretKey(key);
+			}
+
+		}.schedule(KEY_LIFESPAN_MILLIS);
+	}
+
+	private void deprecateAllSecretKeys() {
+		while (!secretKeys.isEmpty()) {
+			SecretKey key = secretKeys.values().iterator().next();
+			deprecateSecretKey(key);
+		}
+	}
+
+	private void deprecateSecretKey(SecretKey key) {
+		GWT.log("deprecating secret key [" + key.getId() + "]");
+		deprecatedSecretKeys.put(key.getId(), key);
+		secretKeys.remove(key.getId());
 	}
 
 	private void handleIntroduction(Message message, byte[] data) {
 		GWT.log("received introduction of new participant to conversation [" + conversationId + "]");
 		PublicKey extractedPublicKey = AsymmetricCipher.Factory.createPublicKey(message.getContent());
 		sharedPublicKeys.put(extractedPublicKey.getId(), extractedPublicKey);
-		// TODO: Invalidate all secret keys
-		// TODO: Add new participant (and his public key)
+		participants.add(extractedPublicKey.getId());
+		deprecateAllSecretKeys();
 	}
 
 	private void handleTextMessage(Message message, byte[] data) {
-		GWT.log(this + "received text message: " + message);
-		// TODO: Decrypt message
-		try {
-			GWT.log("contained text: " + new String(message.getContent(), "UTF-8"));
-		} catch (UnsupportedEncodingException e) {
-			throw new IllegalStateException("utf-8 is not supported", e);
+		GWT.log("received text message: " + message);
+		decrypt(message, (m, c) -> receivedMessageHandler.handleReceivedMessage(m, c));
+	}
+
+	private void decrypt(Message message, MessageHandler messageHandler) {
+		if (message.getKeyId() == null) {
+			throw new IllegalStateException("tried to decrypt unencrypted message");
 		}
-		receivedMessageHandler.handleReceivedMessage(message, message.getContent());
-		// TODO: Inform GUI
+		Key encryptionKey = getEncryptionKey(message.getKeyId());
+		if (encryptionKey == null) {
+			throw new IllegalStateException("unknown encryption key [" + message.getKeyId() + "]");
+		}
+		messageHandler.handleReceivedMessage(message, message.getDecryptedContent(encryptionKey));
 	}
 
 	/**
@@ -171,19 +211,68 @@ public class Conversation {
 	}
 
 	public void send(String text) {
-		// TODO: Encrypt message
 		Message message = new Message();
 		message.setSenderId(keyPair.getPublicKey().getId());
 		message.setMessageType(Message.Type.PLAIN_TEXT);
 		message.setRecipientIds(participants.toArray(new String[0]));
 		message.setConversationId(conversationId);
 		try {
-			message.setContent(text.getBytes("UTF-8"));
+			message.setAndEncryptContent(secretKey(), text.getBytes("UTF-8"));
 		} catch (UnsupportedEncodingException e) {
 			throw new IllegalStateException("utf-8 is not supported", e);
 		}
+
 		message.sign(keyPair.getPrivateKey());
 		messageService.send(message);
+	}
+
+	private Key getEncryptionKey(String keyId) {
+		Key result = secretKeys.get(keyId);
+		if (result == null) {
+			result = deprecatedSecretKeys.get(keyId);
+		}
+		if (result == null) {
+			if (keyPair.getPublicKey().getId().equals(keyId)) {
+				result = keyPair.getPrivateKey();
+			}
+		}
+		return result;
+	}
+
+	private Key secretKey() {
+		if (secretKeys.isEmpty()) {
+			SecretKey key = SymmetricCipher.Factory.generateSecretKey(KeyStrength.STRONGEST);
+			messageService.enqueue(secretKeyMessages(key));
+			addSecretKey(key);
+		}
+		return randomElement(secretKeys.values());
+	}
+
+	private List<Message> secretKeyMessages(SecretKey key) {
+		List<Message> messages = new ArrayList<>(participants.size());
+		for (String p : participants) {
+			messages.add(secretKeyMessage(key, sharedPublicKeys.get(p)));
+		}
+		return messages;
+	}
+
+	private Message secretKeyMessage(SecretKey key, PublicKey recipient) {
+		Message message = new Message();
+		message.setSenderId(keyPair.getPublicKey().getId());
+		message.setMessageType(Message.Type.SECRET_KEY);
+		message.setRecipientIds(new String[] { recipient.getId() });
+		message.setConversationId(conversationId);
+		message.setAndEncryptContent(recipient, key.getPlainKey());
+		message.sign(keyPair.getPrivateKey());
+		return message;
+	}
+
+	private static <T> T randomElement(Collection<T> values) {
+		int num = (int) (Math.random() * values.size());
+		for (T t : values)
+			if (--num < 0)
+				return t;
+		return null;
 	}
 
 }

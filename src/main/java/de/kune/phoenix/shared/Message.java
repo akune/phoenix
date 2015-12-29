@@ -194,6 +194,7 @@ public class Message implements Identifiable<String> {
 
 	public void setAndEncryptContent(Key key, byte[] content) {
 		setContent(getEncryptionCipher(key).encrypt(key, content));
+		setKeyId(key.getId());
 	}
 
 	public byte[] getDecryptedContent(Key key) {

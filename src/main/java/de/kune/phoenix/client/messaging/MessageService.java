@@ -58,12 +58,17 @@ public class MessageService {
 	private String recipientId;
 	private Map<Predicate<Message>, MessageHandler> messageHandlers = new LinkedHashMap<>();
 	private Message lastReceivedMessage;
+	private List<Message> queuedMessages = new ArrayList<>();
 
 	private MessageService() {
 		Defaults.setServiceRoot(com.google.gwt.core.client.GWT.getModuleBaseURL()
 				.replace(com.google.gwt.core.client.GWT.getModuleName() + "/", "") + "api");
 		Defaults.setDateFormat(null);
 		restMessageService = GWT.create(RestMessageService.class);
+	}
+
+	public void enqueue(List<Message> messages) {
+		queuedMessages.addAll(messages);
 	}
 
 	/**
@@ -152,17 +157,21 @@ public class MessageService {
 	 */
 	public void send(List<Message> messages, SuccessHandler<Message> successHandler,
 			FailureHandler<Message> failureHandler) {
-		restMessageService.post(messages, new MethodCallback<Void>() {
+		List<Message> messagesToSend = new ArrayList<>();
+		messagesToSend.addAll(queuedMessages);
+		queuedMessages.clear();
+		messagesToSend.addAll(messages);
+		restMessageService.post(messagesToSend, new MethodCallback<Void>() {
 			@Override
 			public void onFailure(Method method, Throwable exception) {
-				for (Message m : messages) {
+				for (Message m : messagesToSend) {
 					failureHandler.handle(exception, m);
 				}
 			}
 
 			@Override
 			public void onSuccess(Method method, Void response) {
-				for (Message m : messages) {
+				for (Message m : messagesToSend) {
 					successHandler.handle(m);
 				}
 			}
