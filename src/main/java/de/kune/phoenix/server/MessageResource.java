@@ -27,9 +27,11 @@ public class MessageResource {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response post(List<Message> messages) {
-		for (Message message: messages) {
-			message.setSequenceKey(messageStore.generateId());
-			messageStore.add(message);
+		for (Message message : messages) {
+			if (!messageStore.contains(message.getId())) {
+				message.setSequenceKey(messageStore.generateId());
+				messageStore.add(message);
+			}
 		}
 		return Response.status(200).build();
 	}
@@ -39,16 +41,15 @@ public class MessageResource {
 	public Response get(@QueryParam("wait") boolean wait, @QueryParam("last-sequence-key") String lastSequenceKey,
 			@QueryParam("recipient-id") String recipientId, @QueryParam("conversation-id") String conversationId) {
 		if (wait) {
-			return Response.status(200)
-					.entity(messageStore.await(hasRecipient(recipientId).and(hasConversationId(conversationId)).and(wasReceivedAfter(lastSequenceKey))))
-					.build();
+			return Response.status(200).entity(messageStore.await(hasRecipient(recipientId)
+					.and(hasConversationId(conversationId)).and(wasReceivedAfter(lastSequenceKey)))).build();
 		} else {
 			return Response.status(200).entity(messageStore.get(predicate(recipientId, conversationId))).build();
 		}
 	}
 
 	private Predicate<? super Message> wasReceivedAfter(String lastSequenceKey) {
-		return m->lastSequenceKey == null || lastSequenceKey.compareTo(m.getSequenceKey()) < 0;
+		return m -> lastSequenceKey == null || lastSequenceKey.compareTo(m.getSequenceKey()) < 0;
 	}
 
 	private Predicate<Message> hasConversationId(String conversationId) {

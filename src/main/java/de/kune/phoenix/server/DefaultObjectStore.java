@@ -219,4 +219,9 @@ public class DefaultObjectStore<T extends Identifiable<I>, I> implements ObjectS
 	public String toString() {
 		return getClass().getName() + objects.toString();
 	}
+
+	@Override
+	public boolean contains(String id) {
+		return objects.containsKey(id);
+	}
 }

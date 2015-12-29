@@ -146,4 +146,13 @@ public interface ObjectStore<T extends Identifiable<?>> {
 	 */
 	void update(T object);
 
+	/**
+	 * Checks if this store contains a message with the specified id.
+	 * 
+	 * @param id
+	 *            the id
+	 * @return true if the store contains the specified message, else false
+	 */
+	boolean contains(String id);
+
 }
