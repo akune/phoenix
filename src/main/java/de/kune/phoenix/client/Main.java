@@ -34,6 +34,7 @@ import de.kune.phoenix.client.crypto.KeyPair.PublicExponent;
 import de.kune.phoenix.client.crypto.PublicKey;
 import de.kune.phoenix.client.messaging.ClientSession;
 import de.kune.phoenix.client.messaging.Conversation;
+import de.kune.phoenix.shared.Message;
 
 public class Main implements EntryPoint {
 
@@ -84,9 +85,18 @@ public class Main implements EntryPoint {
 	}
 
 	private void handleNewConversation(Conversation.Builder builder) {
-		getConversationAvatarPanel(builder.getConversationId());
-		Panel panel = getChatPanel(builder.getConversationId());
-		builder.receivedMessageHandler((m, c) -> speak(panel, new String(c), Position.LEFT));
+		builder.receivedMessageHandler((m, c) -> handleReceivedMessage(builder.getConversationId(), m, c));
+	}
+
+	private Label handleReceivedMessage(String conversationId, Message m, byte[] c) {
+		Conversation conversation = clientSession.getConversation(conversationId);
+		getConversationAvatarPanel(conversationId);
+		Panel panel = getChatPanel(conversationId);
+		if (conversation.getKeyPair().getPublicKey().getId().equals(m.getSenderId())) {
+			return speak(panel, new String(c), Position.RIGHT);
+		} else {
+			return speak(panel, new String(c), Position.LEFT);
+		}
 	}
 
 	public void onModuleLoad() {
@@ -233,6 +243,7 @@ public class Main implements EntryPoint {
 			chatPanels.put(conversationId, chatPanel);
 			if (!conversationId.equals("system")) {
 				TextBox speakBox = new TextBox();
+				speakBox.setStylePrimaryName("speak");
 				speakBox.getElement().setAttribute("placeholder", "Message");
 				chatPanel.add(speakBox);
 				speakBox.addKeyUpHandler(new KeyUpHandler() {

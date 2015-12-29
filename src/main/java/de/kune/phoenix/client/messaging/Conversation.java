@@ -275,4 +275,8 @@ public class Conversation {
 		return null;
 	}
 
+	public KeyPair getKeyPair() {
+		return keyPair;
+	}
+
 }

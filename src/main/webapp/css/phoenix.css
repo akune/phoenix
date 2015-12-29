@@ -37,15 +37,19 @@ img {
 	right: 0px;
 	padding: 0 5px;
 	bottom: 25px;
+	overflow: visible;
 }
 
-div.phoenix.container div.speak-panel input {
-	width: 100%;
-	border-radius: 5px;
-	border: solid 1px black;
-	line-height: 20px;
-	padding-left: 10px;
-}
+.phoenix.container .chat-panel input.speak {
+    left: 0;
+    border-radius: 5px;
+    border: solid 1px black;
+    line-height: 20px;
+    padding-left: 10px;
+    position: absolute;
+    width: 100%;
+    bottom: -15px;
+    margin-left: -15px;}
 
 div.phoenix.container div.speak-panel {
 	position: fixed;
