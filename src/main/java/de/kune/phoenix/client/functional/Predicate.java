@@ -1,7 +1,6 @@
 package de.kune.phoenix.client.functional;
 
 import java.util.Collection;
-import java.util.Objects;
 
 import de.kune.phoenix.shared.Message;
 

@@ -1,6 +1,5 @@
 package de.kune.phoenix.client;
 
-import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
