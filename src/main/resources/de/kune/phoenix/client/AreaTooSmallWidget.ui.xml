@@ -1,0 +1,10 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+  <g:HTMLPanel addStyleNames="alert alert-warning hidden area-too-small">
+    <center>
+      <span class="glyphicon glyphicon-info-sign"></span>
+      Area too small.
+    </center>
+  </g:HTMLPanel>
+</ui:UiBinder>
