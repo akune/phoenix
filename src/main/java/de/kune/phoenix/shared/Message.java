@@ -1,9 +1,10 @@
 package de.kune.phoenix.shared;
 
 import static de.kune.phoenix.client.crypto.AsymmetricCipher.Factory.createPublicKey;
-import static de.kune.phoenix.client.functional.Predicate.hasType;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 
 import com.google.gwt.core.shared.GWT;
@@ -11,6 +12,7 @@ import com.google.gwt.core.shared.GWT;
 import de.kune.phoenix.client.crypto.AsymmetricCipher;
 import de.kune.phoenix.client.crypto.Cipher;
 import de.kune.phoenix.client.crypto.Key;
+import de.kune.phoenix.client.crypto.KeyPair;
 import de.kune.phoenix.client.crypto.PrivateKey;
 import de.kune.phoenix.client.crypto.PublicKey;
 import de.kune.phoenix.client.crypto.SecretKey;
@@ -19,6 +21,7 @@ import de.kune.phoenix.client.crypto.util.Base64Utils;
 import de.kune.phoenix.client.crypto.util.Digest;
 import de.kune.phoenix.client.crypto.util.Sha256;
 import de.kune.phoenix.client.functional.Predicate;
+import de.kune.phoenix.client.functional.Supplier;
 
 public class Message implements Identifiable<String> {
 
@@ -48,7 +51,7 @@ public class Message implements Identifiable<String> {
 		 */
 		INTRODUCTION,
 	}
-	
+
 	public static Predicate<Message> isSelfSignedPublicKey() {
 		return hasType(Message.Type.PUBLIC_KEY).and(m -> m.getKeyId() == null).and(m -> m.getConversationId() == null)
 				.and(m -> {
@@ -58,7 +61,79 @@ public class Message implements Identifiable<String> {
 				});
 	}
 
+	public static Predicate<Message> hasType(Message.Type type) {
+		return m -> m.getMessageType() == type;
+	}
 
+	public static Predicate<Message> hasConversationId(String conversationId) {
+		return m -> conversationId.equals(m.getConversationId());
+	}
+
+	public static Predicate<Message> containsSender(Supplier<Collection<String>> participantsSupplier) {
+		return m -> participantsSupplier.get().contains(m.getSenderId());
+	}
+
+	public static Predicate<Message> isTextMessage() {
+		return hasType(Message.Type.PLAIN_TEXT);
+	}
+
+	public static Predicate<Message> isSecretKey() {
+		return hasType(Message.Type.SECRET_KEY);
+	}
+
+	public static Predicate<Message> isIntroduction() {
+		return hasType(Message.Type.INTRODUCTION);
+	}
+
+	public static Message secretKey(SecretKey key, String conversationId, KeyPair sender, PublicKey recipient) {
+		Message message = new Message();
+		message.setSenderId(sender.getPublicKey().getId());
+		message.setMessageType(Message.Type.SECRET_KEY);
+		message.setRecipientIds(new String[] { recipient.getId() });
+		message.setConversationId(conversationId);
+		message.setAndEncryptContent(recipient, key.getPlainKey());
+		message.sign(sender.getPrivateKey());
+		return message;
+	}
+
+	public static Message selfSignedPublicKey(PublicKey publicKeyToSelfSign, KeyPair sender) {
+		Message message = new Message();
+		message.setSenderId(sender.getPublicKey().getId());
+		message.setMessageType(Message.Type.PUBLIC_KEY);
+		message.setRecipientIds(new String[] { publicKeyToSelfSign.getId() });
+		message.setConversationId(null);
+		message.setContent(sender.getPublicKey().getPlainKey());
+		message.sign(sender.getPrivateKey());
+		return message;
+	}
+
+	public static Message introduction(PublicKey introducedParticipant, String conversationId, KeyPair sender,
+			String[] recipients) {
+		Message message = new Message();
+		message.setSenderId(sender.getPublicKey().getId());
+		message.setMessageType(Message.Type.INTRODUCTION);
+		message.setRecipientIds(recipients);
+		message.setConversationId(conversationId);
+		message.setContent(introducedParticipant.getPlainKey());
+		message.sign(sender.getPrivateKey());
+		return message;
+	}
+
+	public static Message text(String text, SecretKey secretKey, String conversationId, KeyPair sender,
+			String[] recipients) {
+		Message message = new Message();
+		message.setSenderId(sender.getPublicKey().getId());
+		message.setMessageType(Message.Type.PLAIN_TEXT);
+		message.setRecipientIds(recipients);
+		message.setConversationId(conversationId);
+		try {
+			message.setAndEncryptContent(secretKey, text.getBytes("UTF-8"));
+		} catch (UnsupportedEncodingException e) {
+			throw new IllegalStateException("utf-8 is not supported", e);
+		}
+		message.sign(sender.getPrivateKey());
+		return message;
+	}
 
 	/**
 	 * The id of this message.

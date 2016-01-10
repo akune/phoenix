@@ -1,11 +1,12 @@
 package de.kune.phoenix.client.messaging;
 
-import static de.kune.phoenix.client.functional.Predicate.containsSender;
-import static de.kune.phoenix.client.functional.Predicate.hasConversationId;
-import static de.kune.phoenix.client.functional.Predicate.hasType;
+import static de.kune.phoenix.shared.Message.containsSender;
+import static de.kune.phoenix.shared.Message.hasConversationId;
+import static de.kune.phoenix.shared.Message.isIntroduction;
+import static de.kune.phoenix.shared.Message.isSecretKey;
+import static de.kune.phoenix.shared.Message.isTextMessage;
 import static java.util.Arrays.asList;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -98,26 +99,17 @@ public class Conversation {
 		this.conversationId = conversationId;
 		this.receivedMessageHandler = receivedMessageHandler;
 		participants.addAll(Arrays.asList(recipientIds));
-		messageService.addMessageHandler(isSecretKey(), this::handleSecretKey);
-		messageService.addMessageHandler(isIntroduction(), this::handleIntroduction);
-		messageService.addMessageHandler(isTextMessage(), this::handleTextMessage);
+		messageService.addMessageHandler(isFromValidSenderToMe().and(isSecretKey()), this::handleSecretKey);
+		messageService.addMessageHandler(isFromValidSenderToMe().and(isIntroduction()), this::handleIntroduction);
+		messageService.addMessageHandler(isFromValidSenderToMe().and(isTextMessage()), this::handleTextMessage);
+	}
+
+	private Predicate<Message> isFromValidSenderToMe() {
+		return hasConversationId(conversationId).and(containsSender(() -> participants));
 	}
 
 	public String getConversationId() {
 		return conversationId;
-	}
-
-	private Predicate<Message> isTextMessage() {
-		return hasConversationId(conversationId).and(hasType(Message.Type.PLAIN_TEXT));
-	}
-
-	private Predicate<Message> isSecretKey() {
-		return hasConversationId(conversationId).and(hasType(Message.Type.SECRET_KEY));
-	}
-
-	private Predicate<Message> isIntroduction() {
-		return containsSender(participants).and(hasConversationId(conversationId))
-				.and(hasType(Message.Type.INTRODUCTION));
 	}
 
 	private void handleSecretKey(Message message, byte[] data) {
@@ -189,41 +181,16 @@ public class Conversation {
 	}
 
 	private Message selfSignedPublicKey(PublicKey participant) {
-		Message message = new Message();
-		message.setSenderId(keyPair.getPublicKey().getId());
-		message.setMessageType(Message.Type.PUBLIC_KEY);
-		message.setRecipientIds(new String[] { participant.getId() });
-		message.setConversationId(null);
-		message.setContent(keyPair.getPublicKey().getPlainKey());
-		message.sign(keyPair.getPrivateKey());
-		return message;
+		return Message.selfSignedPublicKey(participant, keyPair);
 	}
 
 	private Message introductionMessage(PublicKey participant) {
-		Message message = new Message();
-		message.setSenderId(keyPair.getPublicKey().getId());
-		message.setMessageType(Message.Type.INTRODUCTION);
-		message.setRecipientIds(participants.toArray(new String[0]));
-		message.setConversationId(conversationId);
-		message.setContent(participant.getPlainKey());
-		message.sign(keyPair.getPrivateKey());
-		return message;
+		return Message.introduction(participant, conversationId, keyPair, participants.toArray(new String[0]));
 	}
 
 	public void send(String text) {
-		Message message = new Message();
-		message.setSenderId(keyPair.getPublicKey().getId());
-		message.setMessageType(Message.Type.PLAIN_TEXT);
-		message.setRecipientIds(participants.toArray(new String[0]));
-		message.setConversationId(conversationId);
-		try {
-			message.setAndEncryptContent(secretKey(), text.getBytes("UTF-8"));
-		} catch (UnsupportedEncodingException e) {
-			throw new IllegalStateException("utf-8 is not supported", e);
-		}
-
-		message.sign(keyPair.getPrivateKey());
-		messageService.send(message);
+		messageService
+				.send(Message.text(text, secretKey(), conversationId, keyPair, participants.toArray(new String[0])));
 	}
 
 	private Key getEncryptionKey(String keyId) {
@@ -239,7 +206,7 @@ public class Conversation {
 		return result;
 	}
 
-	private Key secretKey() {
+	private SecretKey secretKey() {
 		if (secretKeys.isEmpty()) {
 			SecretKey key = SymmetricCipher.Factory.generateSecretKey(KeyStrength.STRONGEST);
 			messageService.enqueue(secretKeyMessages(key));
@@ -257,14 +224,7 @@ public class Conversation {
 	}
 
 	private Message secretKeyMessage(SecretKey key, PublicKey recipient) {
-		Message message = new Message();
-		message.setSenderId(keyPair.getPublicKey().getId());
-		message.setMessageType(Message.Type.SECRET_KEY);
-		message.setRecipientIds(new String[] { recipient.getId() });
-		message.setConversationId(conversationId);
-		message.setAndEncryptContent(recipient, key.getPlainKey());
-		message.sign(keyPair.getPrivateKey());
-		return message;
+		return Message.secretKey(key, conversationId, keyPair, recipient);
 	}
 
 	private static <T> T randomElement(Collection<T> values) {

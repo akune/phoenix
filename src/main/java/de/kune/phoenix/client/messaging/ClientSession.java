@@ -2,7 +2,7 @@ package de.kune.phoenix.client.messaging;
 
 import static de.kune.phoenix.client.crypto.AsymmetricCipher.Factory.createPublicKey;
 import static de.kune.phoenix.client.functional.Predicate.always;
-import static de.kune.phoenix.client.functional.Predicate.hasType;
+import static de.kune.phoenix.shared.Message.hasType;
 import static de.kune.phoenix.shared.Message.isSelfSignedPublicKey;
 
 import java.util.Arrays;
