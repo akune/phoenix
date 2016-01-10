@@ -61,7 +61,7 @@ public class ClientSession {
 	}
 
 	private Predicate<Message> isIntroductionToNewConversation() {
-		return hasType(Message.Type.INTRODUCTION).and(isPublicKeyOfThisClientSession().or(wasSentByThisClientSession()))
+		return hasType(Message.Type.INTRODUCTION).and(isMyOwnPublicKey().or(wasSentByMe()))
 				.and(hasUnknownConversationId());
 	}
 
@@ -85,11 +85,11 @@ public class ClientSession {
 		return m -> !conversations.containsKey(m.getConversationId());
 	}
 
-	private Predicate<Message> wasSentByThisClientSession() {
-		return m -> recipientId.equals(m.getSenderId());
+	private Predicate<Message> wasSentByMe() {
+		return Message.wasSentBy(recipientId);
 	}
 
-	private Predicate<Message> isPublicKeyOfThisClientSession() {
+	private Predicate<Message> isMyOwnPublicKey() {
 		return m -> Arrays.equals(m.getContent(), keyPair.getPublicKey().getPlainKey());
 	}
 

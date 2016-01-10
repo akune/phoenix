@@ -85,6 +85,10 @@ public class Message implements Identifiable<String> {
 		return hasType(Message.Type.INTRODUCTION);
 	}
 
+	public static Predicate<Message> wasSentBy(String recipientId) {
+		return m -> recipientId.equals(m.getSenderId());
+	}
+
 	public static Message secretKey(SecretKey key, String conversationId, KeyPair sender, PublicKey recipient) {
 		Message message = new Message();
 		message.setSenderId(sender.getPublicKey().getId());
