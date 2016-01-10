@@ -9,15 +9,12 @@ import static java.util.Arrays.asList;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import com.google.gwt.core.shared.GWT;
-import com.google.gwt.user.client.Timer;
 
 import de.kune.phoenix.client.crypto.AsymmetricCipher;
 import de.kune.phoenix.client.crypto.Key;
@@ -28,11 +25,10 @@ import de.kune.phoenix.client.crypto.SecretKey.KeyStrength;
 import de.kune.phoenix.client.crypto.SymmetricCipher;
 import de.kune.phoenix.client.functional.MessageHandler;
 import de.kune.phoenix.client.functional.Predicate;
+import de.kune.phoenix.client.messaging.KeyStore.DeprecatingSecretKeyStore;
 import de.kune.phoenix.shared.Message;
 
 public class Conversation {
-
-	private static final int KEY_LIFESPAN_MILLIS = 10 * 1000;
 
 	public static Builder builder() {
 		return new Builder();
@@ -83,18 +79,25 @@ public class Conversation {
 		}
 	}
 
-	private final KeyPair keyPair;
+	private SecretKey secretKey() {
+		if (secretKeyStore.containsValidKey()) {
+			SecretKey key = SymmetricCipher.Factory.generateSecretKey(KeyStrength.STRONGEST);
+			messageService.enqueue(secretKeyMessages(key));
+			secretKeyStore.addKey(key);
+		}
+		return secretKeyStore.anyValidKey();
+	}
+
 	private final MessageService messageService = MessageService.instance();
 	private final String conversationId;
 	private final Map<String, PublicKey> sharedPublicKeys;
-	private final Map<String, SecretKey> secretKeys = new HashMap<>();
-	private final Map<String, SecretKey> deprecatedSecretKeys = new HashMap<>();
 	private Set<String> participants = new HashSet<>();
+	private final KeyStore<SecretKey> secretKeyStore;
 	private final MessageHandler receivedMessageHandler;
 
 	private Conversation(KeyPair keyPair, Map<String, PublicKey> sharedPublicKeys, String conversationId,
 			String[] recipientIds, MessageHandler receivedMessageHandler) {
-		this.keyPair = keyPair;
+		this.secretKeyStore = new DeprecatingSecretKeyStore(keyPair);
 		this.sharedPublicKeys = sharedPublicKeys;
 		this.conversationId = conversationId;
 		this.receivedMessageHandler = receivedMessageHandler;
@@ -114,31 +117,7 @@ public class Conversation {
 
 	private void handleSecretKey(Message message, byte[] data) {
 		GWT.log("received secret key message: " + message);
-		decrypt(message, (m, c) -> addSecretKey(SymmetricCipher.Factory.createSecretKey(c)));
-	}
-
-	private void addSecretKey(SecretKey key) {
-		secretKeys.put(key.getId(), key);
-		new Timer() {
-			@Override
-			public void run() {
-				deprecateSecretKey(key);
-			}
-
-		}.schedule(KEY_LIFESPAN_MILLIS);
-	}
-
-	private void deprecateAllSecretKeys() {
-		while (!secretKeys.isEmpty()) {
-			SecretKey key = secretKeys.values().iterator().next();
-			deprecateSecretKey(key);
-		}
-	}
-
-	private void deprecateSecretKey(SecretKey key) {
-		GWT.log("deprecating secret key [" + key.getId() + "]");
-		deprecatedSecretKeys.put(key.getId(), key);
-		secretKeys.remove(key.getId());
+		decrypt(message, (m, c) -> secretKeyStore.addKey(SymmetricCipher.Factory.createSecretKey(c)));
 	}
 
 	private void handleIntroduction(Message message, byte[] data) {
@@ -146,7 +125,7 @@ public class Conversation {
 		PublicKey extractedPublicKey = AsymmetricCipher.Factory.createPublicKey(message.getContent());
 		sharedPublicKeys.put(extractedPublicKey.getId(), extractedPublicKey);
 		participants.add(extractedPublicKey.getId());
-		deprecateAllSecretKeys();
+		secretKeyStore.deprecateAllKeys();
 	}
 
 	private void handleTextMessage(Message message, byte[] data) {
@@ -158,7 +137,7 @@ public class Conversation {
 		if (message.getKeyId() == null) {
 			throw new IllegalStateException("tried to decrypt unencrypted message");
 		}
-		Key encryptionKey = getEncryptionKey(message.getKeyId());
+		Key encryptionKey = secretKeyStore.getKey(message.getKeyId());
 		if (encryptionKey == null) {
 			throw new IllegalStateException("unknown encryption key [" + message.getKeyId() + "]");
 		}
@@ -181,38 +160,17 @@ public class Conversation {
 	}
 
 	private Message selfSignedPublicKey(PublicKey participant) {
-		return Message.selfSignedPublicKey(participant, keyPair);
+		return Message.selfSignedPublicKey(participant, secretKeyStore.getKeyPair());
 	}
 
 	private Message introductionMessage(PublicKey participant) {
-		return Message.introduction(participant, conversationId, keyPair, participants.toArray(new String[0]));
+		return Message.introduction(participant, conversationId, secretKeyStore.getKeyPair(),
+				participants.toArray(new String[0]));
 	}
 
 	public void send(String text) {
-		messageService
-				.send(Message.text(text, secretKey(), conversationId, keyPair, participants.toArray(new String[0])));
-	}
-
-	private Key getEncryptionKey(String keyId) {
-		Key result = secretKeys.get(keyId);
-		if (result == null) {
-			result = deprecatedSecretKeys.get(keyId);
-		}
-		if (result == null) {
-			if (keyPair.getPublicKey().getId().equals(keyId)) {
-				result = keyPair.getPrivateKey();
-			}
-		}
-		return result;
-	}
-
-	private SecretKey secretKey() {
-		if (secretKeys.isEmpty()) {
-			SecretKey key = SymmetricCipher.Factory.generateSecretKey(KeyStrength.STRONGEST);
-			messageService.enqueue(secretKeyMessages(key));
-			addSecretKey(key);
-		}
-		return randomElement(secretKeys.values());
+		messageService.send(Message.text(text, secretKey(), conversationId, secretKeyStore.getKeyPair(),
+				participants.toArray(new String[0])));
 	}
 
 	private List<Message> secretKeyMessages(SecretKey key) {
@@ -224,19 +182,11 @@ public class Conversation {
 	}
 
 	private Message secretKeyMessage(SecretKey key, PublicKey recipient) {
-		return Message.secretKey(key, conversationId, keyPair, recipient);
+		return Message.secretKey(key, conversationId, secretKeyStore.getKeyPair(), recipient);
 	}
 
-	private static <T> T randomElement(Collection<T> values) {
-		int num = (int) (Math.random() * values.size());
-		for (T t : values)
-			if (--num < 0)
-				return t;
-		return null;
-	}
-
-	public KeyPair getKeyPair() {
-		return keyPair;
+	public String getSenderId() {
+		return secretKeyStore.getKeyPair().getPublicKey().getId();
 	}
 
 }

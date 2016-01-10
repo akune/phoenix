@@ -35,7 +35,7 @@ public class Main implements EntryPoint {
 		Conversation conversation = clientSession.getConversation(conversationId);
 		if (conversation != null) {
 			try {
-				if (m.getSenderId().equals(conversation.getKeyPair().getPublicKey().getId())) {
+				if (m.getSenderId().equals(conversation.getSenderId())) {
 					chatClientWidget().addSentMessage(conversationId, new String(c, "UTF-8"));
 				} else {
 					chatClientWidget().addReceivedMessage(conversationId, new String(c, "UTF-8"));
