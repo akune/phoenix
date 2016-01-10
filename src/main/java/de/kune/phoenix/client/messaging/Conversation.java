@@ -160,7 +160,7 @@ public class Conversation {
 	}
 
 	private Message selfSignedPublicKey(PublicKey participant) {
-		return Message.selfSignedPublicKey(participant, secretKeyStore.getKeyPair());
+		return Message.signedPublicKey(participant, secretKeyStore.getKeyPair());
 	}
 
 	private Message introductionMessage(PublicKey participant) {

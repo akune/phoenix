@@ -52,6 +52,12 @@ public class Message implements Identifiable<String> {
 		INTRODUCTION,
 	}
 
+	/**
+	 * Creates a message predicate that checks if the message is a self-signed
+	 * public key message.
+	 * 
+	 * @return a message predicate
+	 */
 	public static Predicate<Message> isSelfSignedPublicKey() {
 		return hasType(Message.Type.PUBLIC_KEY).and(m -> m.getKeyId() == null).and(m -> m.getConversationId() == null)
 				.and(m -> {
@@ -61,34 +67,97 @@ public class Message implements Identifiable<String> {
 				});
 	}
 
+	/**
+	 * Creates a message predicate that checks if the message has the specified
+	 * message type.
+	 * 
+	 * @param type
+	 *            the message type
+	 * @return a message predicate
+	 */
 	public static Predicate<Message> hasType(Message.Type type) {
 		return m -> m.getMessageType() == type;
 	}
 
+	/**
+	 * Creates a message predicate that checks if the message has the specified
+	 * conversation id.
+	 * 
+	 * @param conversationId
+	 *            the conversation id
+	 * @return a message predicate
+	 */
 	public static Predicate<Message> hasConversationId(String conversationId) {
 		return m -> conversationId.equals(m.getConversationId());
 	}
 
+	/**
+	 * Creates a message predicate that checks if the message was sent by one of
+	 * the supplied participants.
+	 * 
+	 * @param participantsSupplier
+	 *            the participant supplier
+	 * @return a message predicate
+	 */
 	public static Predicate<Message> containsSender(Supplier<Collection<String>> participantsSupplier) {
 		return m -> participantsSupplier.get().contains(m.getSenderId());
 	}
 
+	/**
+	 * Creates a message predicate that checks if the message is a plain text
+	 * message.
+	 * 
+	 * @return a message predicate
+	 */
 	public static Predicate<Message> isTextMessage() {
 		return hasType(Message.Type.PLAIN_TEXT);
 	}
 
+	/**
+	 * Creates a message predicate that checks if the message is a secret key
+	 * message.
+	 * 
+	 * @return a message predicate
+	 */
 	public static Predicate<Message> isSecretKey() {
 		return hasType(Message.Type.SECRET_KEY);
 	}
 
+	/**
+	 * Creates a message predicate that checks if the message is a introduction
+	 * message.
+	 * 
+	 * @return a message predicate
+	 */
 	public static Predicate<Message> isIntroduction() {
 		return hasType(Message.Type.INTRODUCTION);
 	}
 
-	public static Predicate<Message> wasSentBy(String recipientId) {
-		return m -> recipientId.equals(m.getSenderId());
+	/**
+	 * Creates a message predicate that checks if the message was sent by the
+	 * specified sender.
+	 * 
+	 * @param senderId
+	 *            the sender id
+	 * @return a message predicate
+	 */
+	public static Predicate<Message> wasSentBy(String senderId) {
+		return m -> senderId.equals(m.getSenderId());
 	}
 
+	/**
+	 * Creates a public key-encrypted, signed message containing a secret key.
+	 * 
+	 * @param key
+	 *            the key to be contained in the message to create
+	 * @param conversationId
+	 *            the conversation id
+	 * @param sender
+	 *            the sender's key pair
+	 * @param recipient
+	 *            the recipient's public key
+	 * @return a secret key message
+	 */
 	public static Message secretKey(SecretKey key, String conversationId, KeyPair sender, PublicKey recipient) {
 		Message message = new Message();
 		message.setSenderId(sender.getPublicKey().getId());
@@ -100,17 +169,40 @@ public class Message implements Identifiable<String> {
 		return message;
 	}
 
-	public static Message selfSignedPublicKey(PublicKey publicKeyToSelfSign, KeyPair sender) {
+	/**
+	 * Creates a message containing a signed public key to self-introduce
+	 * someone to a participant who is to be invited to a conversation.
+	 * 
+	 * @param publicKeyToSign
+	 *            the public key to sign with the message to create
+	 * @param sender
+	 *            the sender's key pair
+	 * @return a public key message object
+	 */
+	public static Message signedPublicKey(PublicKey publicKeyToSign, KeyPair sender) {
 		Message message = new Message();
 		message.setSenderId(sender.getPublicKey().getId());
 		message.setMessageType(Message.Type.PUBLIC_KEY);
-		message.setRecipientIds(new String[] { publicKeyToSelfSign.getId() });
+		message.setRecipientIds(new String[] { publicKeyToSign.getId() });
 		message.setConversationId(null);
 		message.setContent(sender.getPublicKey().getPlainKey());
 		message.sign(sender.getPrivateKey());
 		return message;
 	}
 
+	/**
+	 * Creates a signed message introducing a new participant to a conversation.
+	 * 
+	 * @param introducedParticipant
+	 *            the introduced participant's public key
+	 * @param conversationId
+	 *            the conversation id
+	 * @param sender
+	 *            the sender's key pair
+	 * @param recipients
+	 *            the recipients
+	 * @return an introduction message object
+	 */
 	public static Message introduction(PublicKey introducedParticipant, String conversationId, KeyPair sender,
 			String[] recipients) {
 		Message message = new Message();
@@ -123,6 +215,21 @@ public class Message implements Identifiable<String> {
 		return message;
 	}
 
+	/**
+	 * Creates a signed text message.
+	 * 
+	 * @param text
+	 *            the text
+	 * @param secretKey
+	 *            the secret key used for encryption
+	 * @param conversationId
+	 *            the conversation id
+	 * @param sender
+	 *            the sender's public key
+	 * @param recipients
+	 *            the recipients
+	 * @return a text message object
+	 */
 	public static Message text(String text, SecretKey secretKey, String conversationId, KeyPair sender,
 			String[] recipients) {
 		Message message = new Message();
