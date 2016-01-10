@@ -35,6 +35,15 @@ public interface Predicate<T> {
 		};
 	}
 
+	default Predicate<T> or(Predicate<? super T> p) {
+		return new Predicate<T>() {
+			@Override
+			public boolean test(T m) {
+				return Predicate.this.test(m) || p.test(m);
+			}
+		};
+	}
+
 	boolean test(T t);
 
 }

@@ -1,18 +1,18 @@
 package de.kune.phoenix.client.messaging;
 
+import static de.kune.phoenix.client.crypto.AsymmetricCipher.Factory.createPublicKey;
 import static de.kune.phoenix.client.functional.Predicate.always;
 import static de.kune.phoenix.client.functional.Predicate.hasType;
+import static de.kune.phoenix.shared.Message.isSelfSignedPublicKey;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.google.gwt.core.shared.GWT;
-
-import de.kune.phoenix.client.crypto.AsymmetricCipher;
 import de.kune.phoenix.client.crypto.KeyPair;
 import de.kune.phoenix.client.crypto.PublicKey;
 import de.kune.phoenix.client.functional.ConversationInitiationHandler;
+import de.kune.phoenix.client.functional.Predicate;
 import de.kune.phoenix.shared.Identifiable;
 import de.kune.phoenix.shared.Message;
 
@@ -55,38 +55,42 @@ public class ClientSession {
 		this.conversationInitiationHandler = conversationInitiationHandler;
 		sharedPublicKeys.put(keyPair.getPublicKey().getId(), keyPair.getPublicKey());
 		recipientId = keyPair.getPublicKey().getId();
-		messageService.addMessageHandler(hasType(Message.Type.PUBLIC_KEY), this::handlePublicKeyMessage);
+		messageService.addMessageHandler(isSelfSignedPublicKey(), this::handlePublicKeyMessage);
 		messageService.addMessageHandler(always(), this::validateSignature);
-		messageService.addMessageHandler(hasType(Message.Type.INTRODUCTION), this::handleIntroductionToNewConversation);
+		messageService.addMessageHandler(isIntroductionToNewConversation(), this::handleIntroductionToNewConversation);
+	}
+
+	private Predicate<Message> isIntroductionToNewConversation() {
+		return hasType(Message.Type.INTRODUCTION).and(isPublicKeyOfThisClientSession().or(wasSentByThisClientSession()))
+				.and(hasUnknownConversationId());
+	}
+
+	private void handlePublicKeyMessage(Message message, byte[] data) {
+		addPublicKey(createPublicKey(message.getContent()));
+	}
+
+	private void addPublicKey(PublicKey publicKey) {
+		sharedPublicKeys.put(publicKey.getId(), publicKey);
 	}
 
 	private void handleIntroductionToNewConversation(Message message, byte[] data) {
-		GWT.log("received introduction: " + message);
-		if (messageContainsPublicKeyOfThisClientSession(message) || messageWasSentByThisClientSession(message)) {
-			if (messageHasUnknownConversationId(message)) {
-				GWT.log("received introduction to new conversation. participants: "
-						+ Arrays.toString(message.getRecipientIds()));
-				PublicKey extractedPublicKey = AsymmetricCipher.Factory.createPublicKey(message.getContent());
-				sharedPublicKeys.put(extractedPublicKey.getId(), extractedPublicKey);
-				Conversation.Builder builder = Conversation.builder().keyPair(keyPair)
-						.sharedPublicKeys(sharedPublicKeys).conversationId(message.getConversationId())
-						.recipientIds(message.getRecipientIds());
-				conversationInitiationHandler.handle(builder);
-				conversations.put(message.getConversationId(), builder.build());
-			}
-		}
+		addPublicKey(createPublicKey(message.getContent()));
+		Conversation.Builder builder = Conversation.builder().keyPair(keyPair).sharedPublicKeys(sharedPublicKeys)
+				.conversationId(message.getConversationId()).recipientIds(message.getRecipientIds());
+		conversationInitiationHandler.handle(builder);
+		conversations.put(message.getConversationId(), builder.build());
 	}
 
-	private boolean messageHasUnknownConversationId(Message message) {
-		return !conversations.containsKey(message.getConversationId());
+	private Predicate<Message> hasUnknownConversationId() {
+		return m -> !conversations.containsKey(m.getConversationId());
 	}
 
-	private boolean messageWasSentByThisClientSession(Message message) {
-		return recipientId.equals(message.getSenderId());
+	private Predicate<Message> wasSentByThisClientSession() {
+		return m -> recipientId.equals(m.getSenderId());
 	}
 
-	private boolean messageContainsPublicKeyOfThisClientSession(Message message) {
-		return Arrays.equals(message.getContent(), keyPair.getPublicKey().getPlainKey());
+	private Predicate<Message> isPublicKeyOfThisClientSession() {
+		return m -> Arrays.equals(m.getContent(), keyPair.getPublicKey().getPlainKey());
 	}
 
 	private void validateSignature(Message message, byte[] data) {
@@ -99,18 +103,6 @@ public class ClientSession {
 		}
 		if (!message.checkSignature(publicKey)) {
 			throw new IllegalStateException("incorrectly signed message [" + message + "]");
-		}
-	}
-
-	private void handlePublicKeyMessage(Message message, byte[] data) {
-		if (message.getKeyId() == null) {
-			PublicKey extractedPublicKey = AsymmetricCipher.Factory.createPublicKey(message.getContent());
-			GWT.log("received unencrypted public key: " + extractedPublicKey.getId());
-			if (message.getSenderId().equals(extractedPublicKey.getId())
-					&& message.checkSignature(extractedPublicKey)) {
-				GWT.log("adding self-signed public key to shared public keys");
-				sharedPublicKeys.put(extractedPublicKey.getId(), extractedPublicKey);
-			}
 		}
 	}
 
@@ -131,6 +123,14 @@ public class ClientSession {
 		return conversation;
 	}
 
+	/**
+	 * Returns the conversation with the specified id if it is registered with
+	 * this client session or null.
+	 * 
+	 * @param conversationId
+	 *            the conversation id
+	 * @return a conversation object or null
+	 */
 	public Conversation getConversation(String conversationId) {
 		return conversations.get(conversationId);
 	}

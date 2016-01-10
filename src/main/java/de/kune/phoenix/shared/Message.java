@@ -1,7 +1,12 @@
 package de.kune.phoenix.shared;
 
+import static de.kune.phoenix.client.crypto.AsymmetricCipher.Factory.createPublicKey;
+import static de.kune.phoenix.client.functional.Predicate.hasType;
+
 import java.util.Arrays;
 import java.util.Date;
+
+import com.google.gwt.core.shared.GWT;
 
 import de.kune.phoenix.client.crypto.AsymmetricCipher;
 import de.kune.phoenix.client.crypto.Cipher;
@@ -13,6 +18,7 @@ import de.kune.phoenix.client.crypto.SymmetricCipher;
 import de.kune.phoenix.client.crypto.util.Base64Utils;
 import de.kune.phoenix.client.crypto.util.Digest;
 import de.kune.phoenix.client.crypto.util.Sha256;
+import de.kune.phoenix.client.functional.Predicate;
 
 public class Message implements Identifiable<String> {
 
@@ -42,6 +48,17 @@ public class Message implements Identifiable<String> {
 		 */
 		INTRODUCTION,
 	}
+	
+	public static Predicate<Message> isSelfSignedPublicKey() {
+		return hasType(Message.Type.PUBLIC_KEY).and(m -> m.getKeyId() == null).and(m -> m.getConversationId() == null)
+				.and(m -> {
+					PublicKey extractedPublicKey = createPublicKey(m.getContent());
+					GWT.log("received unencrypted public key: " + extractedPublicKey.getId());
+					return (m.getSenderId().equals(extractedPublicKey.getId()) && m.checkSignature(extractedPublicKey));
+				});
+	}
+
+
 
 	/**
 	 * The id of this message.
