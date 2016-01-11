@@ -2,7 +2,7 @@ package de.kune.phoenix.client.messaging;
 
 import static de.kune.phoenix.client.crypto.AsymmetricCipher.Factory.createPublicKey;
 import static de.kune.phoenix.client.functional.Predicate.always;
-import static de.kune.phoenix.shared.Message.hasType;
+import static de.kune.phoenix.shared.Message.isIntroduction;
 import static de.kune.phoenix.shared.Message.isSelfSignedPublicKey;
 
 import java.util.Arrays;
@@ -61,7 +61,7 @@ public class ClientSession {
 	}
 
 	private Predicate<Message> isIntroductionToNewConversation() {
-		return hasType(Message.Type.INTRODUCTION).and(isMyOwnPublicKey().or(wasSentByMe()))
+		return isIntroduction().and(isMyOwnPublicKey().or(wasSentByMe()))
 				.and(hasUnknownConversationId());
 	}
 
