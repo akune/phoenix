@@ -27,29 +27,20 @@ public class Message implements Identifiable<String> {
 
 	public static enum Type {
 		/**
-		 * Plain text message.
+		 * Plain text message type.
 		 */
 		PLAIN_TEXT,
 
 		/**
-		 * Secret key message.
+		 * Secret key message type.
 		 */
 		SECRET_KEY,
 
 		/**
-		 * Public key message.
+		 * Public key message type.
 		 */
 		PUBLIC_KEY,
 
-		/**
-		 * Invitation message.
-		 */
-		INVITATION,
-
-		/**
-		 * Introduction message.
-		 */
-		INTRODUCTION,
 	}
 
 	/**
@@ -133,7 +124,7 @@ public class Message implements Identifiable<String> {
 	 * @see #introduction(PublicKey, String, KeyPair, String[])
 	 */
 	public static Predicate<Message> isIntroduction() {
-		return hasType(Message.Type.INTRODUCTION).and(hasConversationId());
+		return hasType(Message.Type.PUBLIC_KEY).and(hasConversationId());
 	}
 
 	/**
@@ -222,7 +213,7 @@ public class Message implements Identifiable<String> {
 			String[] recipients) {
 		Message message = new Message();
 		message.setSenderId(sender.getPublicKey().getId());
-		message.setMessageType(Message.Type.INTRODUCTION);
+		message.setMessageType(Message.Type.PUBLIC_KEY);
 		message.setRecipientIds(recipients);
 		message.setConversationId(conversationId);
 		message.setContent(introducedParticipant.getPlainKey());
