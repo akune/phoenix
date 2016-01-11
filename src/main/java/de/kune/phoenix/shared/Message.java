@@ -57,6 +57,7 @@ public class Message implements Identifiable<String> {
 	 * public key message.
 	 * 
 	 * @return a message predicate
+	 * @see #signedPublicKey(PublicKey, KeyPair)
 	 */
 	public static Predicate<Message> isSelfSignedPublicKey() {
 		return hasType(Message.Type.PUBLIC_KEY).and(m -> m.getKeyId() == null).and(m -> m.getConversationId() == null)
@@ -108,6 +109,7 @@ public class Message implements Identifiable<String> {
 	 * message.
 	 * 
 	 * @return a message predicate
+	 * @see #text(String, SecretKey, String, KeyPair, String[])
 	 */
 	public static Predicate<Message> isTextMessage() {
 		return hasType(Message.Type.PLAIN_TEXT);
@@ -128,9 +130,20 @@ public class Message implements Identifiable<String> {
 	 * message.
 	 * 
 	 * @return a message predicate
+	 * @see #introduction(PublicKey, String, KeyPair, String[])
 	 */
 	public static Predicate<Message> isIntroduction() {
-		return hasType(Message.Type.INTRODUCTION);
+		return hasType(Message.Type.INTRODUCTION).and(hasConversationId());
+	}
+
+	/**
+	 * Creates a message predicate that checks if the message has a conversation
+	 * id.
+	 * 
+	 * @return a message predicate
+	 */
+	private static Predicate<Message> hasConversationId() {
+		return m -> m.getConversationId() != null;
 	}
 
 	/**
@@ -178,6 +191,7 @@ public class Message implements Identifiable<String> {
 	 * @param sender
 	 *            the sender's key pair
 	 * @return a public key message object
+	 * @see #isSelfSignedPublicKey()
 	 */
 	public static Message signedPublicKey(PublicKey publicKeyToSign, KeyPair sender) {
 		Message message = new Message();
@@ -202,6 +216,7 @@ public class Message implements Identifiable<String> {
 	 * @param recipients
 	 *            the recipients
 	 * @return an introduction message object
+	 * @see #isIntroduction()
 	 */
 	public static Message introduction(PublicKey introducedParticipant, String conversationId, KeyPair sender,
 			String[] recipients) {
@@ -229,6 +244,7 @@ public class Message implements Identifiable<String> {
 	 * @param recipients
 	 *            the recipients
 	 * @return a text message object
+	 * @see #isTextMessage()
 	 */
 	public static Message text(String text, SecretKey secretKey, String conversationId, KeyPair sender,
 			String[] recipients) {
