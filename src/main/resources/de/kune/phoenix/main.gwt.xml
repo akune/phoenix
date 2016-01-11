@@ -11,6 +11,7 @@
   <!-- <inherits name='com.google.gwt.user.theme.chrome.Chrome'/> -->
   <!-- <inherits name='com.google.gwt.user.theme.dark.Dark'/> -->
   <inherits name="org.fusesource.restygwt.RestyGWT" />
+<inherits name="com.google.gwt.resources.Resources" />
 
   <!-- Other module inherits -->
 

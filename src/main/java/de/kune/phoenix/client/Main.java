@@ -1,11 +1,14 @@
 package de.kune.phoenix.client;
 
+import static de.kune.phoenix.client.Animations.fadeIn;
+
 import java.io.UnsupportedEncodingException;
 
 import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.http.client.URL;
+import com.google.gwt.storage.client.Storage;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -51,6 +54,7 @@ public class Main implements EntryPoint {
 	private ChatClientWidget chatClientWidget() {
 		if (chatClientWidget == null) {
 			chatClientWidget = new ChatClientWidget();
+			chatClientWidget.setVisible(false);
 		}
 		return chatClientWidget;
 	}
@@ -61,8 +65,11 @@ public class Main implements EntryPoint {
 		}
 		return areaTooSmallWidget;
 	}
-
+	
 	public void onModuleLoad() {
+		Storage storage = Storage.getLocalStorageIfSupported();
+		GWT.log("storage supported: " + (storage != null));
+
 		RootPanel.get().add(areaTooSmallWidget());
 		RootPanel.get().add(chatClientWidget());
 		CipherSuite.init(new Callback<Void, Exception>() {
@@ -74,6 +81,7 @@ public class Main implements EntryPoint {
 
 			@Override
 			public void onSuccess(Void result) {
+				fadeIn(chatClientWidget()).run(250);
 				getOrCreateKeyPair(new Callback<KeyPair, Exception>() {
 					@Override
 					public void onFailure(Exception reason) {

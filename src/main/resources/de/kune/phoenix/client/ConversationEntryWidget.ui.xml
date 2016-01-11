@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
   xmlns:g='urn:import:com.google.gwt.user.client.ui'>
   <g:HTMLPanel ui:field="conversationEntryContainer" addStyleNames="conversation-entry">
-    <g:Image ui:field="avatarImage" addStyleNames="img-circle" url="https://kune.de/avatar.png" />
+    <g:Image ui:field="avatarImage" addStyleNames="img-circle" url="img/avatar.png" />
     <g:InlineHTML ui:field="title" addStyleNames="title">Unknown</g:InlineHTML>
     <g:InlineHTML ui:field="closeConversation" addStyleNames="glyphicon glyphicon-remove-circle close-conversation" />
     <g:InlineHTML ui:field="unreadMessagesBadge" addStyleNames="badge">1</g:InlineHTML>
