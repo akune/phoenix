@@ -1,7 +1,8 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
   xmlns:g='urn:import:com.google.gwt.user.client.ui'>
-  <g:HTMLPanel ui:field="chatClientContainer" addStyleNames="messaging-client container-fluid">
+  <g:HTMLPanel addStyleNames="messaging-client container-fluid">
+  <g:HTMLPanel ui:field="chatClientContainer" addStyleNames="full">
     <g:HTMLPanel ui:field="conversationsPanel"
       addStyleNames="panel panel-default full conversations">
       <div class="panel-heading">
@@ -122,5 +123,6 @@
 <!--       </div> -->
 <!--     </div> -->
 
+  </g:HTMLPanel>
   </g:HTMLPanel>
 </ui:UiBinder>

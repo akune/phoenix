@@ -1,6 +1,8 @@
 package de.kune.phoenix.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -13,6 +15,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.Timer;
 
 import de.kune.phoenix.client.functional.SearchHandler;
 import de.kune.phoenix.client.functional.SendMessageHandler;
@@ -53,8 +56,10 @@ public class ChatClientWidget extends Composite {
 
 	@UiHandler("cancelCreateConversation")
 	void handleCancelCreateConversationClick(ClickEvent evt) {
-		newConversationPanel.addStyleName("hidden");
-		conversationsPanel.removeStyleName("hidden");
+		Animations.fadeOut(newConversationPanel).run(150);
+		Animations.fadeIn(conversationsPanel).run(150);
+//		newConversationPanel.addStyleName("hidden");
+//		conversationsPanel.removeStyleName("hidden");
 		searchTextBox.setFocus(false);
 		searchTextBox.setValue("");
 		updateSearchButtonEnabledState();
@@ -62,9 +67,16 @@ public class ChatClientWidget extends Composite {
 
 	@UiHandler("createConversation")
 	void handleCreateConversationClick(ClickEvent evt) {
-		newConversationPanel.removeStyleName("hidden");
-		conversationsPanel.addStyleName("hidden");
-		searchTextBox.setFocus(true);
+		Animations.fadeIn(newConversationPanel).run(150);
+		Animations.fadeOut(conversationsPanel).run(150);
+//		newConversationPanel.removeStyleName("hidden");
+//		conversationsPanel.addStyleName("hidden");
+		new Timer() {
+			@Override
+			public void run() {
+				searchTextBox.setFocus(true);
+			}
+		}.schedule(100);;
 	}
 
 	@UiHandler("searchTextBox")

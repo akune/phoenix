@@ -218,6 +218,32 @@ div.alert.disabled {
   color: #ccc;
 }
 
+div.panel.panel-default.conversations,
+div.panel.panel-default.new-conversation {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: none;
+}
+
+div.panel.panel-default.conversation {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+@media (max-width: 200px),
+(max-height: 150px) {
+  .area-too-small.hidden {
+    display: block !important;
+    height: 100%;
+  }
+  html body div.messaging-client.container-fluid {
+    display: none;
+  }
+  html,body{
+    height: 100%;
+  }
+}
+
 @media (max-width: 480px) {
   div.conversation-entry:hover span.badge {
     display: inline;
@@ -236,6 +262,12 @@ div.alert.disabled {
     vertical-align: top;
     cursor: pointer;
   }
+  .conversations,
+  .new-conversation {
+  	position: absolute !important;
+    float: left;
+    width: 100%;
+  }
   div.conversation {
     position: absolute;
     left: 0;
@@ -248,16 +280,38 @@ div.alert.disabled {
   }
 }
 
-div.panel.panel-default.conversations,
-div.panel.panel-default.new-conversation {
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-  border-right: none;
+@media (min-width: 481px) and (max-width: 800px) {
+  .conversations,
+  .new-conversation {
+  	position: absolute !important;
+    float: left;
+    width: 200px;
+  }
+  .conversation {
+  	position: absolute !important;
+  	left: 200px;
+    width: calc(100% - 200px);
+  }
+  .back-to-conversations {
+    display: none;
+  }
 }
 
-div.panel.panel-default.conversation {
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
+@media (min-width: 801px) {
+  .conversations,
+  .new-conversation {
+  	position: absolute !important;
+    float: left;
+    width: 300px;
+  }
+  .conversation {
+  	position: absolute !important;
+  	left: 300px;
+    width: calc(100% - 300px);
+  }
+  .back-to-conversations {
+    display: none;
+  }
 }
 
 @media (min-width: 1001px) {
@@ -273,42 +327,6 @@ div.panel.panel-default.conversation {
     margin-right: auto;
     padding-top: 3%;
     padding-bottom: 3%;
-  }
-}
-
-@media (min-width: 801px) {
-  .conversations,
-  .new-conversation {
-    float: left;
-    width: 300px;
-  }
-  .back-to-conversations {
-    display: none;
-  }
-}
-
-@media (max-width: 200px),
-(max-height: 150px) {
-  .area-too-small.hidden {
-    display: block !important;
-    height: 100%;
-  }
-  html body div.messaging-client.container-fluid {
-    display: none;
-  }
-  html,body{
-    height: 100%;
-  }
-}
-
-@media (min-width: 481px) and (max-width: 800px) {
-  .conversations,
-  .new-conversation {
-    float: left;
-    width: 200px;
-  }
-  .back-to-conversations {
-    display: none;
   }
 }
 

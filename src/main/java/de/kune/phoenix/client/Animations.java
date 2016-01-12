@@ -21,6 +21,7 @@ public final class Animations {
 			@Override
 			protected void onStart() {
 				super.onStart();
+				w.removeStyleName("hidden");
 				w.setVisible(false);
 				w.getElement().getStyle().setOpacity(0);
 			}
@@ -39,6 +40,7 @@ public final class Animations {
 			@Override
 			protected void onComplete() {
 				super.onComplete();
+				w.addStyleName("hidden");
 				w.setVisible(false);
 				w.getElement().getStyle().setOpacity(1);
 			}
