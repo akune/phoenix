@@ -1,34 +1,26 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
-  xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+  xmlns:g='urn:import:com.google.gwt.user.client.ui'
+  xmlns:p='urn:import:de.kune.phoenix.client'>
   <g:HTMLPanel addStyleNames="messaging-client container-fluid">
   <g:HTMLPanel ui:field="chatClientContainer" addStyleNames="full">
     <g:HTMLPanel ui:field="conversationsPanel"
       addStyleNames="panel panel-default full conversations">
       <div class="panel-heading">
         <span>Conversations</span>
-        <g:InlineHTML ui:field="createConversation"
+
+        <g:InlineHTML ui:field="createConversationClickArea"
           addStyleNames="create-conversation glyphicon glyphicon-edit pull-right" />
+        <g:InlineHTML ui:field="showInfoClickArea"
+          addStyleNames="show-info glyphicon glyphicon-cog pull-right" />
       </div>
-      <g:HTMLPanel ui:field="conversationEntriesPanel" addStyleNames="panel-body conversations-area">
-<!--         <div class="conversation-entry" id="conversation-entry-someone"> -->
-<!--           <img src="https://kune.de/avatar.png" class="img-circle" /> -->
-<!--           Someone -->
-<!--           <span class="glyphicon glyphicon-remove-circle close-conversation"></span> -->
-<!--           <span class="badge">1</span> -->
-<!--         </div> -->
-<!--         <div class="conversation-entry" id="conversation-entry-someone-else"> -->
-<!--           <img src="https://kune.de/avatar.png" class="img-circle" /> -->
-<!--           Someone else -->
-<!--           <span class="glyphicon glyphicon-remove-circle close-conversation"></span> -->
-<!--         </div> -->
-      </g:HTMLPanel>
+      <g:HTMLPanel ui:field="conversationEntriesPanel" addStyleNames="panel-body conversations-area"/>
     </g:HTMLPanel>
 
     <g:HTMLPanel ui:field="newConversationPanel"
       addStyleNames="panel panel-default full hidden new-conversation">
       <div class="panel-heading">
-        <g:InlineHTML ui:field="cancelCreateConversation"
+        <g:InlineHTML ui:field="cancelCreateConversationClickArea"
           addStyleNames="cancel-new-conversation glyphicon glyphicon-menu-left" />
         <span>New conversation</span>
       </div>
@@ -40,88 +32,9 @@
           </span>
         </div>
       </div>
-      <!-- <div class="search-result-entry" id="conversation-entry-someone"> -->
-      <!-- <img -->
-      <!-- src="http://www.helpingoutworkplaces.com/wp-content/uploads/2014/10/unknown-person.jpg" -->
-      <!-- class="img-circle" width="40px" /> -->
-      <!-- Another one -->
-      <!-- </div> -->
     </g:HTMLPanel>
 
-    <g:HTMLPanel ui:field="informationPanel" addStyleNames="panel panel-default full conversation hide-on-phone active">
-      <div class="panel-heading">
-        Information
-      </div>
-      <g:HTMLPanel ui:field="informationBodyPanel" addStyleNames="panel-body">
-        <div class="alert disabled">
-          Start or select a conversation on the left-hand
-          side.
-        </div>
-      </g:HTMLPanel>
-    </g:HTMLPanel>
-
-<!--     <div class="panel panel-default full conversation hide-on-phone" -->
-<!--       id="conversation-someone"> -->
-<!--       <div class="panel-heading"> -->
-<!--         <span class="back-to-conversations glyphicon glyphicon-menu-left" -->
-<!--           aria-hidden="true"></span> -->
-<!--         <span>Someone</span> -->
-<!--       </div> -->
-<!--       <div class="panel-body message-area"> -->
-<!--         <div class="message pull-left"> -->
-<!--           Hello, what's up? I don't know what to write, but -->
-<!--           I need some text... -->
-<!--         </div> -->
-<!--         <div class="message pull-right"> -->
-<!--           Yes, I'm having the same problem, only me and the -->
-<!--           empty sheet of -->
-<!--           paper... That's the stuff nightmares are made -->
-<!--           of. -->
-<!--         </div> -->
-<!--         <div class="message pull-left"> -->
-<!--           Well, what can you do? -->
-<!--         </div> -->
-<!--         <div id="msg15" class="message pull-right"> -->
-<!--           Nothing. -->
-<!--         </div> -->
-<!--       </div> -->
-<!--       <div class="panel-footer sticky-footer"> -->
-<!--         <div class="input-group"> -->
-<!--           <input type="text" class="form-control conversation-input" -->
-<!--             placeholder="Message" /> -->
-<!--           <span class="input-group-btn"> -->
-<!--             <button class="btn btn-default send disabled" type="button"> -->
-<!--               Send</button> -->
-<!--           </span> -->
-<!--         </div> -->
-<!--       </div> -->
-<!--     </div> -->
-
-<!--     <div class="panel panel-default full conversation" id="conversation-someone-else"> -->
-<!--       <div class="panel-heading"> -->
-<!--         <span class="back-to-conversations glyphicon glyphicon-menu-left" -->
-<!--           aria-hidden="true"></span> -->
-<!--         <span>Someone Else</span> -->
-<!--       </div> -->
-<!--       <div class="panel-body message-area"> -->
-<!--         <div class="message pull-left"> -->
-<!--           Hi! -->
-<!--         </div> -->
-<!--         <div class="message pull-right"> -->
-<!--           Hi yourself! -->
-<!--         </div> -->
-<!--       </div> -->
-<!--       <div class="panel-footer sticky-footer"> -->
-<!--         <div class="input-group"> -->
-<!--           <input type="text" class="form-control conversation-input" -->
-<!--             placeholder="Message" /> -->
-<!--           <span class="input-group-btn"> -->
-<!--             <button class="btn btn-default send disabled" type="button"> -->
-<!--               Send</button> -->
-<!--           </span> -->
-<!--         </div> -->
-<!--       </div> -->
-<!--     </div> -->
+    <p:PreferencesWidget ui:field="preferencesPanel"/>
 
   </g:HTMLPanel>
   </g:HTMLPanel>

@@ -197,10 +197,11 @@ div.conversation.active {
   display: block;
 }
 
-span.create-conversation {
+div.panel-heading span.glyphicon.pull-right {
   cursor: pointer;
-  padding-left: 5px;
+  margin-left: 15px;
   line-height: 120%;
+  font-size: 108%;
 }
 
 div.new-conversation span.cancel-new-conversation {

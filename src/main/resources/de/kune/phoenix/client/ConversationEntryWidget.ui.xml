@@ -4,7 +4,7 @@
   <g:HTMLPanel ui:field="conversationEntryContainer" addStyleNames="conversation-entry">
     <g:Image ui:field="avatarImage" addStyleNames="img-circle" url="img/avatar.png" />
     <g:InlineHTML ui:field="title" addStyleNames="title">Unknown</g:InlineHTML>
-    <g:InlineHTML ui:field="closeConversation" addStyleNames="glyphicon glyphicon-remove-circle close-conversation" />
+    <g:InlineHTML ui:field="closeConversationClickArea" addStyleNames="glyphicon glyphicon-remove-circle close-conversation" />
     <g:InlineHTML ui:field="unreadMessagesBadge" addStyleNames="badge">1</g:InlineHTML>
   </g:HTMLPanel>
 </ui:UiBinder>

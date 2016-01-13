@@ -3,37 +3,17 @@
   xmlns:g='urn:import:com.google.gwt.user.client.ui'>
   <g:HTMLPanel addStyleNames="panel panel-default full conversation hide-on-phone">
     <div class="panel-heading">
-      <g:InlineHTML ui:field="backToConversations"
+      <g:InlineHTML ui:field="backToConversationsClickArea"
         addStyleNames="back-to-conversations glyphicon glyphicon-menu-left" />
       <g:InlineHTML ui:field="title">Unknown</g:InlineHTML>
     </div>
     <g:HTMLPanel ui:field="messageAreaPanel" addStyleNames="panel-body message-area">
-<!--       <div class="message pull-left"> -->
-<!--         Hello, what's up? I don't know what to write, but -->
-<!--         I need some text... -->
-<!--       </div> -->
-<!--       <div class="message pull-right"> -->
-<!--         Yes, I'm having the same problem, only me and the -->
-<!--         empty sheet of -->
-<!--         paper... That's the stuff nightmares are made -->
-<!--         of. -->
-<!--       </div> -->
-<!--       <div class="message pull-left"> -->
-<!--         Well, what can you do? -->
-<!--       </div> -->
-<!--       <div id="msg15" class="message pull-right"> -->
-<!--         Nothing. -->
-<!--       </div> -->
     </g:HTMLPanel>
     <div class="panel-footer sticky-footer">
       <div class="input-group">
         <g:TextBox ui:field="messageTextBox" addStyleNames="form-control conversation-input" />
-<!--         <input type="text" class="form-control conversation-input" -->
-<!--           placeholder="Message" /> -->
         <span class="input-group-btn">
           <g:Button ui:field="sendButton" addStyleNames="btn btn-default send disabled">Send</g:Button>
-<!--           <button class="btn btn-default send disabled" type="button"> -->
-<!--             Send</button> -->
         </span>
       </div>
     </div>

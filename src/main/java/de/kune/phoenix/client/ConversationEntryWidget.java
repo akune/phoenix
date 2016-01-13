@@ -14,10 +14,10 @@ import com.google.gwt.user.client.ui.InlineHTML;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ConversationEntryWidget extends Composite implements HasClickHandlers {
-	interface MyUiBinder extends UiBinder<Widget, ConversationEntryWidget> {
+	interface ConversationEntryUiBinder extends UiBinder<Widget, ConversationEntryWidget> {
 	}
 
-	private static MyUiBinder uiBinder = GWT.create(MyUiBinder.class);
+	private static ConversationEntryUiBinder uiBinder = GWT.create(ConversationEntryUiBinder.class);
 	private final String conversationId;
 
 	@UiField
@@ -27,7 +27,7 @@ public class ConversationEntryWidget extends Composite implements HasClickHandle
 	InlineHTML unreadMessagesBadge;
 
 	@UiField
-	InlineHTML closeConversation;
+	InlineHTML closeConversationClickArea;
 
 	// @UiHandler("closeConversation")
 	// void handleCloseConversationClick(ClickHandler handler) {
@@ -80,7 +80,7 @@ public class ConversationEntryWidget extends Composite implements HasClickHandle
 	}
 
 	public HandlerRegistration addCloseClickHandler(ClickHandler handler) {
-		return closeConversation.addDomHandler(handler, ClickEvent.getType());
+		return closeConversationClickArea.addDomHandler(handler, ClickEvent.getType());
 	}
 
 	public boolean isActive() {

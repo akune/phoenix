@@ -6,10 +6,10 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
 public class AreaTooSmallWidget extends Composite {
-	interface MyUiBinder extends UiBinder<Widget, AreaTooSmallWidget> {
+	interface AreaTooSmallUiBinder extends UiBinder<Widget, AreaTooSmallWidget> {
 	}
 
-	private static MyUiBinder uiBinder = GWT.create(MyUiBinder.class);
+	private static AreaTooSmallUiBinder uiBinder = GWT.create(AreaTooSmallUiBinder.class);
 
 	public AreaTooSmallWidget() {
 		initWidget(uiBinder.createAndBindUi(this));

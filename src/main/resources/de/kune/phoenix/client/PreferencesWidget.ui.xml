@@ -1,0 +1,19 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+  xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+  <g:HTMLPanel
+    addStyleNames="panel panel-default full conversation hide-on-phone active">
+    <div class="panel-heading">
+      <g:InlineHTML ui:field="backToConversationsClickArea"
+        addStyleNames="back-to-conversations glyphicon glyphicon-menu-left" />
+      Preferences
+    </div>
+    <g:HTMLPanel ui:field="informationBodyPanel"
+      addStyleNames="panel-body">
+      <div class="alert disabled">
+        Start or select a conversation on the left-hand
+        side.
+      </div>
+    </g:HTMLPanel>
+  </g:HTMLPanel>
+</ui:UiBinder>

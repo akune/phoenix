@@ -1,8 +1,6 @@
 package de.kune.phoenix.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -10,21 +8,22 @@ import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.user.client.Timer;
 
+import de.kune.phoenix.client.crypto.PublicKey;
 import de.kune.phoenix.client.functional.SearchHandler;
 import de.kune.phoenix.client.functional.SendMessageHandler;
 
 public class ChatClientWidget extends Composite {
-	interface MyUiBinder extends UiBinder<Widget, ChatClientWidget> {
+	interface ChatClientUiBinder extends UiBinder<Widget, ChatClientWidget> {
 	}
 
-	private static MyUiBinder uiBinder = GWT.create(MyUiBinder.class);
+	private static ChatClientUiBinder uiBinder = GWT.create(ChatClientUiBinder.class);
 
 	@UiField
 	HTMLPanel newConversationPanel;
@@ -39,10 +38,7 @@ public class ChatClientWidget extends Composite {
 	HTMLPanel chatClientContainer;
 
 	@UiField
-	HTMLPanel informationPanel;
-
-	@UiField
-	HTMLPanel informationBodyPanel;
+	PreferencesWidget preferencesPanel;
 
 	@UiField
 	Button searchButton;
@@ -54,23 +50,24 @@ public class ChatClientWidget extends Composite {
 
 	private SendMessageHandler sendMessageHandler;
 
-	@UiHandler("cancelCreateConversation")
+	@UiHandler("showInfoClickArea")
+	void handleShowInfoClick(ClickEvent evt) {
+		activateConversation(null);
+	}
+	
+	@UiHandler("cancelCreateConversationClickArea")
 	void handleCancelCreateConversationClick(ClickEvent evt) {
 		Animations.fadeOut(newConversationPanel).run(150);
 		Animations.fadeIn(conversationsPanel).run(150);
-//		newConversationPanel.addStyleName("hidden");
-//		conversationsPanel.removeStyleName("hidden");
 		searchTextBox.setFocus(false);
 		searchTextBox.setValue("");
 		updateSearchButtonEnabledState();
 	}
 
-	@UiHandler("createConversation")
+	@UiHandler("createConversationClickArea")
 	void handleCreateConversationClick(ClickEvent evt) {
 		Animations.fadeIn(newConversationPanel).run(150);
 		Animations.fadeOut(conversationsPanel).run(150);
-//		newConversationPanel.removeStyleName("hidden");
-//		conversationsPanel.addStyleName("hidden");
 		new Timer() {
 			@Override
 			public void run() {
@@ -192,11 +189,8 @@ public class ChatClientWidget extends Composite {
 		// }, 2500);
 	}
 
-	public void addInformationEntry(String text) {
-		HTMLPanel panel = new HTMLPanel(text);
-		panel.addStyleName("alert");
-		panel.addStyleName("disabled");
-		informationBodyPanel.add(panel);
+	public void setPublicKey(PublicKey publicKey) {
+		preferencesPanel.setPublicKey(publicKey);
 	}
 
 	private ConversationEntryWidget getConversationEntryWidget(String conversationId) {
@@ -236,9 +230,11 @@ public class ChatClientWidget extends Composite {
 			}
 		}
 		if (conversationId == null) {
-			informationPanel.addStyleName("active");
+			preferencesPanel.addStyleName("active");
+			preferencesPanel.removeStyleName("hide-on-phone");
 		} else {
-			informationPanel.removeStyleName("active");
+			preferencesPanel.removeStyleName("active");
+			preferencesPanel.addStyleName("hide-on-phone");
 		}
 		for (Widget w : chatClientContainer) {
 			if (w instanceof ConversationWidget) {

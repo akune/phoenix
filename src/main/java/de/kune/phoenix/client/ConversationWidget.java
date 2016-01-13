@@ -20,10 +20,10 @@ import com.google.gwt.user.client.ui.Widget;
 import de.kune.phoenix.client.functional.SendMessageHandler;
 
 public class ConversationWidget extends Composite {
-	interface MyUiBinder extends UiBinder<Widget, ConversationWidget> {
+	interface ConversationUiBinder extends UiBinder<Widget, ConversationWidget> {
 	}
 
-	private static MyUiBinder uiBinder = GWT.create(MyUiBinder.class);
+	private static ConversationUiBinder uiBinder = GWT.create(ConversationUiBinder.class);
 
 	@UiField
 	InlineHTML title;
@@ -61,7 +61,7 @@ public class ConversationWidget extends Composite {
 		messageTextBox.getElement().setAttribute("placeholder", "Message");
 	}
 	
-	@UiHandler("backToConversations")
+	@UiHandler("backToConversationsClickArea")
 	void handleBackToConversationsClick(ClickEvent evt) {
 		addStyleName("hide-on-phone");
 	}
