@@ -24,6 +24,7 @@ import de.kune.phoenix.shared.Message;
 
 public class Main implements EntryPoint {
 
+	private static final String STORAGE_PREFIX = "de.kune.phoenix.client";
 	private ClientSession clientSession;
 	private ChatClientWidget chatClientWidget;
 	private AreaTooSmallWidget areaTooSmallWidget;
@@ -65,10 +66,8 @@ public class Main implements EntryPoint {
 		}
 		return areaTooSmallWidget;
 	}
-	
+
 	public void onModuleLoad() {
-		Storage storage = Storage.getLocalStorageIfSupported();
-		GWT.log("storage supported: " + (storage != null));
 
 		RootPanel.get().add(areaTooSmallWidget());
 		RootPanel.get().add(chatClientWidget());
@@ -123,7 +122,13 @@ public class Main implements EntryPoint {
 	}
 
 	protected void getOrCreateKeyPair(Callback<KeyPair, Exception> callback) {
-		KeyPair keyPair = getKeyPairFromRequestParams();
+		KeyPair keyPair = null;
+		if (keyPair == null) {
+			keyPair = getKeyPairFromRequestParams();
+		}
+		if (keyPair == null) {
+			keyPair = getKeyPairFromLocalStorage();
+		}
 		if (keyPair == null) {
 			AsymmetricCipher.Factory.generateKeyPairAsync(KeyPair.KeyStrength.MEDIUM, PublicExponent.SMALLEST,
 					new Callback<KeyPair, Void>() {
@@ -134,6 +139,7 @@ public class Main implements EntryPoint {
 
 						@Override
 						public void onSuccess(KeyPair result) {
+							addKeyPairToLocalStorage(result);
 							callback.onSuccess(result);
 						}
 					}, new Callback<Integer, Void>() {
@@ -149,6 +155,30 @@ public class Main implements EntryPoint {
 		} else {
 			callback.onSuccess(keyPair);
 		}
+	}
+
+	protected void addKeyPairToLocalStorage(KeyPair result) {
+		Storage storage = Storage.getLocalStorageIfSupported();
+		GWT.log("storage supported: " + (storage != null));
+		if (storage == null) {
+			return;
+		}
+		storage.setItem(STORAGE_PREFIX + "#private-key", result.getPrivateKey().getEncodedKey());
+		storage.setItem(STORAGE_PREFIX + "#public-key", result.getPublicKey().getEncodedKey());
+	}
+
+	private KeyPair getKeyPairFromLocalStorage() {
+		Storage storage = Storage.getLocalStorageIfSupported();
+		GWT.log("storage supported: " + (storage != null));
+		if (storage == null) {
+			return null;
+		}
+		String encodedPrivateKey = storage.getItem(STORAGE_PREFIX + "#private-key");
+		String encodedPublicKey = storage.getItem(STORAGE_PREFIX + "#public-key");
+		if (encodedPrivateKey == null || encodedPublicKey == null) {
+			return null;
+		}
+		return AsymmetricCipher.Factory.createKeyPair(encodedPublicKey, encodedPrivateKey);
 	}
 
 	protected KeyPair getKeyPairFromRequestParams() {
