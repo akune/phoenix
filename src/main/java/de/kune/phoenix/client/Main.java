@@ -90,7 +90,7 @@ public class Main implements EntryPoint {
 					public void onSuccess(KeyPair keyPair) {
 						clientSession = ClientSession.builder().keyPair(keyPair)
 								.conversationInitiationHandler(c -> handleNewConversation(c)).build();
-						chatClientWidget.setPublicKey(keyPair.getPublicKey());
+						chatClientWidget.setKeyPair(keyPair);
 						chatClientWidget.setSearchHandler(s -> performSearch(s));
 						chatClientWidget.setSendMessageHandler(
 								(conversationId, message) -> sendMessage(conversationId, message));

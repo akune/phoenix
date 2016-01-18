@@ -15,7 +15,7 @@ import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
-import de.kune.phoenix.client.crypto.PublicKey;
+import de.kune.phoenix.client.crypto.KeyPair;
 import de.kune.phoenix.client.functional.SearchHandler;
 import de.kune.phoenix.client.functional.SendMessageHandler;
 
@@ -162,35 +162,10 @@ public class ChatClientWidget extends Composite {
 	public ChatClientWidget() {
 		initWidget(uiBinder.createAndBindUi(this));
 		searchTextBox.getElement().setAttribute("placeholder", "Name or hash");
-
-		// addConversation("new-conversation", "Unknown participant");
-		// addConversation("another-conversation", "Another unknown
-		// participant");
-		// String[] m = new String[] { "Ahoy!", "Hello there...", "What are you
-		// doing?", "Are you okay?",
-		// "My head feels funny.", "I can't see!" };
-		// Scheduler.get().scheduleFixedPeriod(new Scheduler.RepeatingCommand()
-		// {
-		// @Override
-		// public boolean execute() {
-		// addReceivedMessage("new-conversation", m[(int) (Math.random() *
-		// m.length)]);
-		// return true;
-		// }
-		// }, 1500);
-		// Scheduler.get().scheduleFixedPeriod(new Scheduler.RepeatingCommand()
-		// {
-		// @Override
-		// public boolean execute() {
-		// addReceivedMessage("another-conversation", m[(int) (Math.random() *
-		// m.length)]);
-		// return true;
-		// }
-		// }, 2500);
 	}
 
-	public void setPublicKey(PublicKey publicKey) {
-		preferencesPanel.setPublicKey(publicKey);
+	public void setKeyPair(KeyPair keyPair) {
+		preferencesPanel.setKeyPair(keyPair);
 	}
 
 	private ConversationEntryWidget getConversationEntryWidget(String conversationId) {
