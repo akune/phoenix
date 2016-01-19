@@ -57,6 +57,10 @@ public class ChatClientWidget extends Composite {
 	
 	@UiHandler("cancelCreateConversationClickArea")
 	void handleCancelCreateConversationClick(ClickEvent evt) {
+		closeSearchPanel();
+	}
+	
+	public void closeSearchPanel() {
 		Animations.fadeOut(newConversationPanel).run(150);
 		Animations.fadeIn(conversationsPanel).run(150);
 		searchTextBox.setFocus(false);

@@ -116,6 +116,8 @@ public class Main implements EntryPoint {
 			GWT.log("Inviting " + publicKey.getId());
 			Conversation conversation = clientSession.startConversation();
 			conversation.introduce(publicKey);
+			chatClientWidget().closeSearchPanel();
+			chatClientWidget().activateConversation(conversation.getConversationId());
 		} catch (RuntimeException e) {
 			GWT.log("not a public key");
 		}
