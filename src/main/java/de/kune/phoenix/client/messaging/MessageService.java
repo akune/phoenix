@@ -43,18 +43,34 @@ public class MessageService {
 						handleReceivedMessage(m);
 					}
 					pollingRestReceiverTimer.schedule(pollInterval);
+					if (!connected) {
+						connected = true;
+						invokeConnectionStateChangeHandlers();
+					}
 				}
 
 				@Override
 				public void onFailure(Method method, Throwable exception) {
-					pollingRestReceiverTimer.schedule(5000);
+					GWT.log("getting latest message(s) failed");
+					if (connected) {
+						connected = false;
+						invokeConnectionStateChangeHandlers();
+					}
+					pollingRestReceiverTimer.schedule(1000);
 					throw new RuntimeException(exception);
 				}
 			};
-			restMessageService.get(true, lastReceivedMessage == null ? null : lastReceivedMessage.getSequenceKey(),
+			restMessageService.get(connected, lastReceivedMessage == null ? null : lastReceivedMessage.getSequenceKey(),
 					recipientId, messageHandler);
 		}
 	};
+
+	public static interface ConnectionStateChangeHandler {
+		void handleConnectionStateChange(MessageService service);
+	}
+
+	private boolean connected;
+	private List<ConnectionStateChangeHandler> connectionStateChangeHandlers = new ArrayList<>();
 	private String recipientId;
 	private Map<Predicate<Message>, MessageHandler> messageHandlers = new LinkedHashMap<>();
 	private Message lastReceivedMessage;
@@ -65,6 +81,18 @@ public class MessageService {
 				.replace(com.google.gwt.core.client.GWT.getModuleName() + "/", "") + "api");
 		Defaults.setDateFormat(null);
 		restMessageService = GWT.create(RestMessageService.class);
+	}
+
+	private void invokeConnectionStateChangeHandlers() {
+		GWT.log("invoking connection state change handlers");
+		for (ConnectionStateChangeHandler h : connectionStateChangeHandlers) {
+			GWT.log("invoking " + h);
+			h.handleConnectionStateChange(this);
+		}
+	}
+	
+	public void addConnectionStateChangeHandler(ConnectionStateChangeHandler h) {
+		connectionStateChangeHandlers.add(h);
 	}
 
 	public void enqueue(List<Message> messages) {
@@ -212,6 +240,10 @@ public class MessageService {
 
 	public void stop() {
 		pollingRestReceiverTimer.cancel();
+	}
+
+	public boolean isConnected() {
+		return connected;
 	}
 
 }

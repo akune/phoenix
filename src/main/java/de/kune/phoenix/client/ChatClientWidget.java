@@ -45,6 +45,9 @@ public class ChatClientWidget extends Composite {
 
 	@UiField
 	HTMLPanel conversationEntriesPanel;
+	
+	@UiField
+	HTMLPanel connectionLostPanel;
 
 	private SearchHandler searchHandler;
 
@@ -234,6 +237,10 @@ public class ChatClientWidget extends Composite {
 	public void setSendMessageHandler(SendMessageHandler sendMessageHandler) {
 		this.sendMessageHandler = sendMessageHandler;
 
+	}
+
+	public void setConnectionState(boolean connected) {
+		connectionLostPanel.setVisible(!connected);
 	}
 
 }

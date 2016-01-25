@@ -20,6 +20,7 @@ import de.kune.phoenix.client.crypto.KeyPair.PublicExponent;
 import de.kune.phoenix.client.crypto.PublicKey;
 import de.kune.phoenix.client.messaging.ClientSession;
 import de.kune.phoenix.client.messaging.Conversation;
+import de.kune.phoenix.client.messaging.MessageService;
 import de.kune.phoenix.shared.Message;
 
 public class Main implements EntryPoint {
@@ -28,6 +29,11 @@ public class Main implements EntryPoint {
 	private ClientSession clientSession;
 	private ChatClientWidget chatClientWidget;
 	private AreaTooSmallWidget areaTooSmallWidget;
+
+	private void handleConnectionStateChange(MessageService s) {
+		GWT.log("Connected: " + s.isConnected());
+		chatClientWidget().setConnectionState(s.isConnected());
+	}
 
 	private void handleNewConversation(Conversation.Builder builder) {
 		GWT.log("handle new conversation");
@@ -89,7 +95,8 @@ public class Main implements EntryPoint {
 					@Override
 					public void onSuccess(KeyPair keyPair) {
 						clientSession = ClientSession.builder().keyPair(keyPair)
-								.conversationInitiationHandler(c -> handleNewConversation(c)).build();
+								.conversationInitiationHandler(Main.this::handleNewConversation)
+								.connectionStateChangeHander(Main.this::handleConnectionStateChange).build();
 						chatClientWidget.setKeyPair(keyPair);
 						chatClientWidget.setSearchHandler(s -> performSearch(s));
 						chatClientWidget.setSendMessageHandler(

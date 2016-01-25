@@ -13,7 +13,8 @@
   <inherits name="org.fusesource.restygwt.RestyGWT" />
   <inherits name="com.google.gwt.resources.Resources" />
   
-  <set-property name="gwt.logging.enabled" value="FALSE"/> 
+  <set-property name="gwt.logging.enabled" value="TRUE"/>
+  <set-property name="gwt.logging.simpleRemoteHandler" value="DISABLED" /> 
 
   <!-- Other module inherits -->
 

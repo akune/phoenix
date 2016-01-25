@@ -1,6 +1,7 @@
 package de.kune.phoenix.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -21,10 +22,19 @@ public class PreferencesWidget extends Composite {
 	private static PreferencesUiBinder uiBinder = GWT.create(PreferencesUiBinder.class);
 
 	@UiField
+	EditTextBox screenNameEditTextBox;
+	
+	@UiField
 	HTMLPanel informationBodyPanel;
 
 	public PreferencesWidget() {
 		initWidget(uiBinder.createAndBindUi(this));
+		screenNameEditTextBox.addUpdateHandler(b->GWT.log(((EditTextBox)b.getSource()).getText()));
+	}
+	
+	@UiHandler("screenNameEditTextBox")
+	void screenNameEditTextBoxChange(UpdateEvent evt) {
+		GWT.log(""+evt);
 	}
 
 	@UiHandler("backToConversationsClickArea")
