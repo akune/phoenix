@@ -1,8 +1,5 @@
 package de.kune.phoenix.client;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -19,11 +16,6 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 public class EditTextBox extends Composite implements HasHandlers {
-
-	// @FunctionalInterface
-	// public static interface UpdateHandler {
-	// void handleUpdate(EditTextBox textBox);
-	// }
 
 	interface EditTextFieldUiBinder extends UiBinder<Widget, EditTextBox> {
 	}
@@ -46,8 +38,6 @@ public class EditTextBox extends Composite implements HasHandlers {
 	HTMLPanel buttonGroupPanel;
 
 	private String text = "";
-
-	private List<UpdateHandler> updateHandlers = new ArrayList<>();
 
 	public EditTextBox() {
 		initWidget(uiBinder.createAndBindUi(this));
