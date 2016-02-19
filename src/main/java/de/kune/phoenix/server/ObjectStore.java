@@ -14,41 +14,6 @@ import de.kune.phoenix.shared.Identifiable;
 public interface ObjectStore<T extends Identifiable<?>> {
 
 	/**
-	 * Specifies an object store listener
-	 *
-	 * @param <T>
-	 *            the element type
-	 */
-	interface ObjectStoreListener<T> {
-		/**
-		 * Indicates that the specified element has been added to the observed
-		 * store.
-		 * 
-		 * @param object
-		 *            the element
-		 */
-		void added(T object);
-
-		/**
-		 * Indicates that the specified element has been removed from the
-		 * observed store.
-		 * 
-		 * @param object
-		 *            the element
-		 */
-		void removed(T object);
-
-		/**
-		 * Indicates that the specified element has been updated in the observed
-		 * store.
-		 * 
-		 * @param object
-		 *            the element
-		 */
-		void updated(T object);
-	}
-
-	/**
 	 * Adds the specified element to this store.
 	 * 
 	 * @param object
@@ -109,26 +74,6 @@ public interface ObjectStore<T extends Identifiable<?>> {
 	 * @return an element or null if this store is empty
 	 */
 	T any();
-
-	/**
-	 * Adds the specified listener.
-	 * 
-	 * @param predicate
-	 *            the predicate
-	 * @param listener
-	 *            the listener
-	 */
-	void addListener(Predicate<T> predicate, ObjectStoreListener<T> listener);
-
-	/**
-	 * Removes the specified listener.
-	 * 
-	 * @param predicate
-	 *            the predicate
-	 * @param listener
-	 *            the listener
-	 */
-	void removeListener(Predicate<T> predicate, ObjectStoreListener<T> listener);
 
 	/**
 	 * Generates a store-unique id.
