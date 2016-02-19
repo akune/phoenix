@@ -24,7 +24,7 @@ import de.kune.phoenix.shared.Message;
 public class MessageService {
 
 	private static final MessageService instance = new MessageService();
-	private static final int pollInterval = 1000;
+	private static final int pollInterval = 250;
 
 	public static MessageService instance() {
 		return instance;
@@ -32,32 +32,40 @@ public class MessageService {
 
 	private final RestMessageService restMessageService;
 	private final Timer pollingRestReceiverTimer = new Timer() {
+		private int connectionFailureCount = 0;
 
 		@Override
 		public void run() {
 			MethodCallback<List<Message>> messageHandler = new MethodCallback<List<Message>>() {
+
 				@Override
 				public void onSuccess(Method method, List<Message> response) {
+					if (!connected) {
+						GWT.log("(re-)established connection");
+						connected = true;
+						connectionFailureCount = 0;
+						invokeConnectionStateChangeHandlers();
+					}
 					GWT.log("received messages " + response);
 					for (Message m : response) {
 						handleReceivedMessage(m);
 					}
 					pollingRestReceiverTimer.schedule(pollInterval);
-					if (!connected) {
-						connected = true;
-						invokeConnectionStateChangeHandlers();
-					}
 				}
 
 				@Override
 				public void onFailure(Method method, Throwable exception) {
-					GWT.log("getting latest message(s) failed");
+					connectionFailureCount++;
 					if (connected) {
+						GWT.log("lost connection");
 						connected = false;
 						invokeConnectionStateChangeHandlers();
 					}
-					pollingRestReceiverTimer.schedule(1000);
-					throw new RuntimeException(exception);
+					int delay = Math.min(connectionFailureCount * connectionFailureCount * 250, 60 * 1000);
+					GWT.log("getting latest message(s) failed " + connectionFailureCount + " times, delaying retry for "
+							+ delay + "ms");
+					pollingRestReceiverTimer.schedule(delay);
+					// throw new RuntimeException(exception);
 				}
 			};
 			restMessageService.get(connected, lastReceivedMessage == null ? null : lastReceivedMessage.getSequenceKey(),
@@ -86,11 +94,10 @@ public class MessageService {
 	private void invokeConnectionStateChangeHandlers() {
 		GWT.log("invoking connection state change handlers");
 		for (ConnectionStateChangeHandler h : connectionStateChangeHandlers) {
-			GWT.log("invoking " + h);
 			h.handleConnectionStateChange(this);
 		}
 	}
-	
+
 	public void addConnectionStateChangeHandler(ConnectionStateChangeHandler h) {
 		connectionStateChangeHandlers.add(h);
 	}
