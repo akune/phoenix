@@ -9,13 +9,11 @@
       Preferences
     </div>
     <g:HTMLPanel ui:field="informationBodyPanel"
-      addStyleNames="panel-body">
+      addStyleNames="panel-body preference-area">
       <div class="alert disabled">
         Start or select a conversation on the left-hand
         side.
       </div>
-    </g:HTMLPanel>
-    <g:HTMLPanel addStyleNames="panel-body">
       <div class="alert">
           <p:Label text="Screen Name:" for="{screenNameEditTextBox}" />
           <p:EditTextBox ui:field="screenNameEditTextBox"

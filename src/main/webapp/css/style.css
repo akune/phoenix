@@ -134,6 +134,13 @@ div.message-area {
   width: 100%;
 }
 
+div.preference-area {
+  overflow-y: auto;
+  position: absolute;
+  height: calc(100% - 40px);
+  width: 100%;
+}
+
 div.full {
   position: relative;
   overflow: hidden;
