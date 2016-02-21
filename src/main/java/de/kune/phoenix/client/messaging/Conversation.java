@@ -168,8 +168,8 @@ public class Conversation {
 				participants.toArray(new String[0]));
 	}
 
-	public void send(String text) {
-		messageService.send(Message.text(text, secretKey(), conversationId, secretKeyStore.getKeyPair(),
+	public Message send(String text) {
+		return messageService.send(Message.text(text, secretKey(), conversationId, secretKeyStore.getKeyPair(),
 				participants.toArray(new String[0])));
 	}
 

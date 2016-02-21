@@ -169,6 +169,19 @@ div.message.pull-right {
   border-color: #bce8f1;
 }
 
+.processing {
+  float: left;
+  width: 16px;
+  height: 16px;
+  background-image: url('../img/processing.gif');
+  background-size: 16px;
+  margin-right: 10px;
+}
+
+div.message.pull-right.pending  {
+  content: "...";
+}
+
 div.message.pull-left {
   margin-right: 30px;
   color: #333;

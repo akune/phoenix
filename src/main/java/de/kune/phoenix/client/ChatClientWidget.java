@@ -18,6 +18,7 @@ import com.google.gwt.user.client.ui.Widget;
 import de.kune.phoenix.client.crypto.KeyPair;
 import de.kune.phoenix.client.functional.SearchHandler;
 import de.kune.phoenix.client.functional.SendMessageHandler;
+import de.kune.phoenix.shared.Message;
 
 public class ChatClientWidget extends Composite {
 	interface ChatClientUiBinder extends UiBinder<Widget, ChatClientWidget> {
@@ -114,16 +115,18 @@ public class ChatClientWidget extends Composite {
 		}
 	}
 
-	void sendMessage(String conversationId, String message) {
+	Message sendMessage(String conversationId, String message) {
 		if (sendMessageHandler != null) {
-			sendMessageHandler.sendMessage(conversationId, message);
+			return sendMessageHandler.sendMessage(conversationId, message);
+		} else {
+			return null;
 		}
 	}
 
-	public void addReceivedMessage(String conversationId, String message) {
+	public void addReceivedMessage(String conversationId, String messageId, String message) {
 		ConversationWidget conversationWidget = getConversationWidget(conversationId);
 		if (conversationWidget != null) {
-			getConversationWidget(conversationId).addReceivedMessage(message);
+			getConversationWidget(conversationId).addReceivedMessage(messageId, message);
 		}
 		ConversationEntryWidget entry = getConversationEntryWidget(conversationId);
 		if (entry != null && !entry.isActive()) {
@@ -131,8 +134,8 @@ public class ChatClientWidget extends Composite {
 		}
 	}
 
-	public void addSentMessage(String conversationId, String message) {
-		getConversationWidget(conversationId).addSentMessage(message);
+	public void addSentMessage(String conversationId, String messageId, String message) {
+		getConversationWidget(conversationId).addSentMessage(messageId, message);
 	}
 
 	public void addConversation(String conversationId, String title) {

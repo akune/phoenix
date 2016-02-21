@@ -46,9 +46,9 @@ public class Main implements EntryPoint {
 		if (conversation != null) {
 			try {
 				if (m.getSenderId().equals(conversation.getSenderId())) {
-					chatClientWidget().addSentMessage(conversationId, new String(c, "UTF-8"));
+					chatClientWidget().addSentMessage(conversationId, m.getId(), new String(c, "UTF-8"));
 				} else {
-					chatClientWidget().addReceivedMessage(conversationId, new String(c, "UTF-8"));
+					chatClientWidget().addReceivedMessage(conversationId, m.getId(), new String(c, "UTF-8"));
 				}
 			} catch (UnsupportedEncodingException e) {
 				throw new IllegalStateException("utf-8 not supported");
@@ -107,12 +107,13 @@ public class Main implements EntryPoint {
 		});
 	}
 
-	protected void sendMessage(String conversationId, String message) {
+	protected Message sendMessage(String conversationId, String message) {
 		Conversation conversation = clientSession.getConversation(conversationId);
 		if (conversation != null) {
-			conversation.send(message);
+			return conversation.send(message);
 		} else {
 			GWT.log("no such conversation");
+			return null;
 		}
 	}
 

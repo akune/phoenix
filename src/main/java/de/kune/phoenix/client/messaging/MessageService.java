@@ -65,7 +65,6 @@ public class MessageService {
 					GWT.log("getting latest message(s) failed " + connectionFailureCount + " times, delaying retry for "
 							+ delay + "ms");
 					pollingRestReceiverTimer.schedule(delay);
-					// throw new RuntimeException(exception);
 				}
 			};
 			restMessageService.get(connected, lastReceivedMessage == null ? null : lastReceivedMessage.getSequenceKey(),
@@ -102,8 +101,9 @@ public class MessageService {
 		connectionStateChangeHandlers.add(h);
 	}
 
-	public void enqueue(List<Message> messages) {
+	public List<Message> enqueue(List<Message> messages) {
 		queuedMessages.addAll(messages);
+		return messages;
 	}
 
 	/**
@@ -112,8 +112,8 @@ public class MessageService {
 	 * @param message
 	 *            the message
 	 */
-	public void send(Message message) {
-		send(message, SuccessHandler.nothing(), FailureHandler.log());
+	public Message send(Message message) {
+		return send(message, SuccessHandler.nothing(), FailureHandler.log());
 	}
 
 	/**
@@ -124,8 +124,8 @@ public class MessageService {
 	 * @param failureHandler
 	 *            the failure handler
 	 */
-	public void send(Message message, FailureHandler<Message> failureHandler) {
-		send(message, SuccessHandler.nothing(), failureHandler);
+	public Message send(Message message, FailureHandler<Message> failureHandler) {
+		return send(message, SuccessHandler.nothing(), failureHandler);
 	}
 
 	/**
@@ -138,8 +138,8 @@ public class MessageService {
 	 * @param failureHandler
 	 *            the failure handler
 	 */
-	public void send(Message message, SuccessHandler<Message> successHandler, FailureHandler<Message> failureHandler) {
-		send(Arrays.<Message> asList(message), successHandler, failureHandler);
+	public Message send(Message message, SuccessHandler<Message> successHandler, FailureHandler<Message> failureHandler) {
+		return send(Arrays.<Message> asList(message), successHandler, failureHandler).iterator().next();
 	}
 
 	/**
@@ -148,8 +148,8 @@ public class MessageService {
 	 * @param messages
 	 *            the messages
 	 */
-	public void send(List<Message> messages) {
-		send(messages, SuccessHandler.nothing(), FailureHandler.log());
+	public List<Message> send(List<Message> messages) {
+		return send(messages, SuccessHandler.nothing(), FailureHandler.log());
 	}
 
 	/**
@@ -160,11 +160,11 @@ public class MessageService {
 	 * @param retryCount
 	 *            the retry count after failure
 	 */
-	public void send(List<Message> messages, int retryCount) {
+	public List<Message> send(List<Message> messages, int retryCount) {
 		if (retryCount == 0) {
-			send(messages);
+			return send(messages);
 		} else {
-			send(messages, SuccessHandler.nothing(), (t, m) -> send(messages, retryCount - 1));
+			return send(messages, SuccessHandler.nothing(), (t, m) -> send(messages, retryCount - 1));
 		}
 	}
 
@@ -190,7 +190,7 @@ public class MessageService {
 	 * @param failureHandler
 	 *            the failure handler
 	 */
-	public void send(List<Message> messages, SuccessHandler<Message> successHandler,
+	public List<Message> send(List<Message> messages, SuccessHandler<Message> successHandler,
 			FailureHandler<Message> failureHandler) {
 		List<Message> messagesToSend = new ArrayList<>();
 		messagesToSend.addAll(queuedMessages);
@@ -211,6 +211,7 @@ public class MessageService {
 				}
 			}
 		});
+		return messages;
 	}
 
 	/**

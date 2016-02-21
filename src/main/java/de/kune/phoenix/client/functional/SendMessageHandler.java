@@ -1,8 +1,10 @@
 package de.kune.phoenix.client.functional;
 
+import de.kune.phoenix.shared.Message;
+
 @FunctionalInterface
 public interface SendMessageHandler {
 
-	void sendMessage(String conversationId, String message);
+	Message sendMessage(String conversationId, String message);
 	
 }

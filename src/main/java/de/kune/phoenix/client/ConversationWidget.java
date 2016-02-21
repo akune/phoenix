@@ -1,6 +1,8 @@
 package de.kune.phoenix.client;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -18,6 +20,7 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 import de.kune.phoenix.client.functional.SendMessageHandler;
+import de.kune.phoenix.shared.Message;
 
 public class ConversationWidget extends Composite {
 	interface ConversationUiBinder extends UiBinder<Widget, ConversationWidget> {
@@ -42,6 +45,8 @@ public class ConversationWidget extends Composite {
 	private boolean needsScrollingDown;
 	
 	private SendMessageHandler sendMessageHandler;
+	
+	private Map<String, HTMLPanel> messagePanels = new HashMap<>();
 
 	public void setSendMessageHandler(SendMessageHandler sendMessageHandler) {
 		this.sendMessageHandler = sendMessageHandler;
@@ -94,7 +99,8 @@ public class ConversationWidget extends Composite {
 			messageTextBox.setValue("");
 			updateSendButtonEnabledState();
 			if (sendMessageHandler != null) {
-				sendMessageHandler.sendMessage(getConversationId(), messageString);
+				Message message = sendMessageHandler.sendMessage(getConversationId(), messageString);
+				addSendingMessage(message.getId(), messageString);
 			}
 		}
 	}
@@ -125,17 +131,6 @@ public class ConversationWidget extends Composite {
 		return scrollTop + 5 > scrollHeight - clientHeight;
 	}
 
-	public void addSentMessage(String message) {
-		HTMLPanel messagePanel = new HTMLPanel(message);
-		messagePanel.addStyleName("message");
-		messagePanel.addStyleName("pull-right");
-		boolean scrollDown = isScrolledDown() || !isActive();
-		messageAreaPanel.add(messagePanel);
-		if (scrollDown) {
-			scrollDown();
-		}
-	}
-
 	public boolean isActive() {
 		return Arrays.asList(getStyleName().split(" ")).contains("active");
 	}
@@ -149,10 +144,22 @@ public class ConversationWidget extends Composite {
 		GWT.log("scrolling down");
 		messageAreaPanel.getElement().setScrollTop(messageAreaPanel.getElement().getScrollHeight()-messageAreaPanel.getElement().getClientHeight());
 	}
+	
+	private HTMLPanel getMessagePanel(String messageId, String message) {
+		HTMLPanel result = messagePanels.get(messageId);
+		if (result == null) {
+			result = new HTMLPanel("<div class=\"processing\"></div>" + message);
+			result.addStyleName("message");
+			result.setTitle(messageId);
+			messagePanels.put(messageId, result);
+		} else {
+			result.getElement().setInnerHTML(message);
+		}
+		return result;
+	}
 
-	public void addReceivedMessage(String message) {
-		HTMLPanel messagePanel = new HTMLPanel(message);
-		messagePanel.addStyleName("message");
+	public void addReceivedMessage(String messageId, String message) {
+		HTMLPanel messagePanel = getMessagePanel(messageId, message);
 		messagePanel.addStyleName("pull-left");
 		boolean scrollDown = isScrolledDown() || !isActive();
 		messageAreaPanel.add(messagePanel);
@@ -161,4 +168,25 @@ public class ConversationWidget extends Composite {
 		}
 	}
 
+	public void addSentMessage(String messageId, String message) {
+		HTMLPanel messagePanel = getMessagePanel(messageId, message);
+		messagePanel.addStyleName("pull-right");
+		boolean scrollDown = isScrolledDown() || !isActive();
+		messageAreaPanel.add(messagePanel);
+		if (scrollDown) {
+			scrollDown();
+		}
+	}
+
+	public void addSendingMessage(String messageId, String message) {
+		HTMLPanel messagePanel = getMessagePanel(messageId, message);
+		messagePanel.addStyleName("pull-right");
+		messagePanel.addStyleName("pending");
+		boolean scrollDown = isScrolledDown() || !isActive();
+		messageAreaPanel.add(messagePanel);
+		if (scrollDown) {
+			scrollDown();
+		}
+	}
+	
 }
