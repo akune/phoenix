@@ -169,7 +169,16 @@ div.message.pull-right {
   border-color: #bce8f1;
 }
 
+div.message div.status {
+    font-size: 65%;
+    text-align: right;
+    color: gray;
+    position: relative;
+    top: 5px;
+}
+
 .processing {
+  display: none;
   float: left;
   width: 16px;
   height: 16px;
@@ -178,8 +187,8 @@ div.message.pull-right {
   margin-right: 10px;
 }
 
-div.message.pull-right.pending  {
-  content: "...";
+div.message.pull-right.pending .processing  {
+  display: block;
 }
 
 div.message.pull-left {

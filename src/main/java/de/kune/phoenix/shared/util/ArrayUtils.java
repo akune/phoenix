@@ -1,4 +1,4 @@
-package de.kune.phoenix.server.util;
+package de.kune.phoenix.shared.util;
 
 public class ArrayUtils {
 

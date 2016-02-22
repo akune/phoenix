@@ -1,6 +1,6 @@
 package de.kune.phoenix.server;
 
-import static de.kune.phoenix.server.util.ArrayUtils.contains;
+import static de.kune.phoenix.shared.util.ArrayUtils.contains;
 
 import java.io.IOException;
 import java.io.PrintWriter;

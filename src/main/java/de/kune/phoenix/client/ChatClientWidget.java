@@ -123,10 +123,10 @@ public class ChatClientWidget extends Composite {
 		}
 	}
 
-	public void addReceivedMessage(String conversationId, String messageId, String message) {
+	public void addReceivedMessage(String conversationId, Message message, String plainText) {
 		ConversationWidget conversationWidget = getConversationWidget(conversationId);
 		if (conversationWidget != null) {
-			getConversationWidget(conversationId).addReceivedMessage(messageId, message);
+			getConversationWidget(conversationId).addReceivedMessage(message, plainText);
 		}
 		ConversationEntryWidget entry = getConversationEntryWidget(conversationId);
 		if (entry != null && !entry.isActive()) {
@@ -134,8 +134,8 @@ public class ChatClientWidget extends Composite {
 		}
 	}
 
-	public void addSentMessage(String conversationId, String messageId, String message) {
-		getConversationWidget(conversationId).addSentMessage(messageId, message);
+	public void addSentMessage(String conversationId, Message message, String plainText) {
+		getConversationWidget(conversationId).addSentMessage(message, plainText);
 	}
 
 	public void addConversation(String conversationId, String title) {

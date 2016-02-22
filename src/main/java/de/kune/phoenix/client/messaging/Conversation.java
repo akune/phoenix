@@ -5,8 +5,10 @@ import static de.kune.phoenix.shared.Message.hasConversationId;
 import static de.kune.phoenix.shared.Message.isIntroduction;
 import static de.kune.phoenix.shared.Message.isSecretKey;
 import static de.kune.phoenix.shared.Message.isTextMessage;
+import static de.kune.phoenix.shared.Message.received;
 import static java.util.Arrays.asList;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -15,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.gwt.core.shared.GWT;
+import com.google.gwt.user.client.Timer;
 
 import de.kune.phoenix.client.crypto.AsymmetricCipher;
 import de.kune.phoenix.client.crypto.Key;
@@ -27,6 +30,7 @@ import de.kune.phoenix.client.functional.MessageHandler;
 import de.kune.phoenix.client.functional.Predicate;
 import de.kune.phoenix.client.messaging.KeyStore.DeprecatingSecretKeyStore;
 import de.kune.phoenix.shared.Message;
+import de.kune.phoenix.shared.Message.Type;
 
 public class Conversation {
 
@@ -105,6 +109,12 @@ public class Conversation {
 		messageService.addMessageHandler(isFromValidSenderToMe().and(isSecretKey()), this::handleSecretKey);
 		messageService.addMessageHandler(isFromValidSenderToMe().and(isIntroduction()), this::handleIntroduction);
 		messageService.addMessageHandler(isFromValidSenderToMe().and(isTextMessage()), this::handleTextMessage);
+		messageService.addMessageHandler(isFromValidSenderToMe().and(isReceiveConfirmation()),
+				this::handleReceiveConfirmation);
+	}
+
+	private Predicate<? super Message> isReceiveConfirmation() {
+		return Message.hasType(Type.RECEIVED);
 	}
 
 	private Predicate<Message> isFromValidSenderToMe() {
@@ -128,9 +138,31 @@ public class Conversation {
 		secretKeyStore.deprecateAllKeys();
 	}
 
+	private List<String> sentReceiveConfirmations = new ArrayList<>();
+
+	private void handleReceiveConfirmation(Message message, byte[] data) {
+		try {
+			String messageId = new String(message.getContent(), "UTF-8");
+			String recipient = message.getSenderId();
+			if (secretKeyStore.getKeyPair().getPublicKey().getId().equals(recipient)) {
+				sentReceiveConfirmations.add(messageId);
+			}
+			GWT.log("message [" + messageId + "] was received by [" + message.getSenderId() + "]");
+		} catch (UnsupportedEncodingException e) {
+			throw new IllegalStateException("utf-8 is not supported", e);
+		}
+	}
+
 	private void handleTextMessage(Message message, byte[] data) {
 		GWT.log("received text message: " + message);
 		decrypt(message, (m, c) -> receivedMessageHandler.handleReceivedMessage(m, c));
+		new Timer() {
+			public void run() {
+				if (!sentReceiveConfirmations.contains(message.getId())) {
+					messageService.send(received(message, secretKeyStore.getKeyPair()));
+				}
+			}
+		}.schedule(100);
 	}
 
 	private void decrypt(Message message, MessageHandler messageHandler) {

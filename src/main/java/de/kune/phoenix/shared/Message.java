@@ -1,6 +1,7 @@
 package de.kune.phoenix.shared;
 
 import static de.kune.phoenix.client.crypto.AsymmetricCipher.Factory.createPublicKey;
+import static de.kune.phoenix.shared.util.ArrayUtils.contains;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
@@ -40,6 +41,10 @@ public class Message implements Identifiable<String> {
 		 * Public key message type.
 		 */
 		PUBLIC_KEY,
+
+		RECEIVED,
+
+		READ,
 
 	}
 
@@ -251,6 +256,27 @@ public class Message implements Identifiable<String> {
 		}
 		message.sign(sender.getPrivateKey());
 		return message;
+	}
+
+	public static Message received(Message message, KeyPair sender) {
+		if (!contains(message.getRecipientIds(), sender.getPublicKey().getId())) {
+			throw new IllegalArgumentException(
+					"[" + sender.getPublicKey().getId() + "] is not a recipient of [" + sender + "]");
+		}
+		Message result = new Message();
+		// TODO: Create reproducible id hash: 
+		result.setId(message.getId() + sender.getPublicKey().getId() + Message.Type.RECEIVED.toString());
+		result.setSenderId(sender.getPublicKey().getId());
+		result.setMessageType(Message.Type.RECEIVED);
+		result.setRecipientIds(message.getRecipientIds());
+		result.setConversationId(message.getConversationId());
+		try {
+			result.setContent(message.getId().getBytes("UTF-8"));
+		} catch (UnsupportedEncodingException e) {
+			throw new IllegalStateException("utf-8 is not supported", e);
+		}
+		result.sign(sender.getPrivateKey());
+		return result;
 	}
 
 	/**

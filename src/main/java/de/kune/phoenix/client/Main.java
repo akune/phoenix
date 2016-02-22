@@ -46,9 +46,9 @@ public class Main implements EntryPoint {
 		if (conversation != null) {
 			try {
 				if (m.getSenderId().equals(conversation.getSenderId())) {
-					chatClientWidget().addSentMessage(conversationId, m.getId(), new String(c, "UTF-8"));
+					chatClientWidget().addSentMessage(conversationId, m, new String(c, "UTF-8"));
 				} else {
-					chatClientWidget().addReceivedMessage(conversationId, m.getId(), new String(c, "UTF-8"));
+					chatClientWidget().addReceivedMessage(conversationId, m, new String(c, "UTF-8"));
 				}
 			} catch (UnsupportedEncodingException e) {
 				throw new IllegalStateException("utf-8 not supported");

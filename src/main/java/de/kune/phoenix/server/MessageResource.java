@@ -1,6 +1,6 @@
 package de.kune.phoenix.server;
 
-import static de.kune.phoenix.server.util.ArrayUtils.contains;
+import static de.kune.phoenix.shared.util.ArrayUtils.contains;
 
 import java.util.List;
 import java.util.function.Predicate;

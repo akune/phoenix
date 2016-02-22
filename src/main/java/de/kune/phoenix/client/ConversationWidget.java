@@ -19,6 +19,7 @@ import com.google.gwt.user.client.ui.InlineHTML;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
+import de.kune.phoenix.client.MessageWidget.Type;
 import de.kune.phoenix.client.functional.SendMessageHandler;
 import de.kune.phoenix.shared.Message;
 
@@ -43,10 +44,16 @@ public class ConversationWidget extends Composite {
 	private final String conversationId;
 
 	private boolean needsScrollingDown;
-	
+
 	private SendMessageHandler sendMessageHandler;
-	
-	private Map<String, HTMLPanel> messagePanels = new HashMap<>();
+
+	private Map<String, MessageWidget> messageWidgets = new HashMap<>();
+
+	public ConversationWidget(String conversationId) {
+		this.conversationId = conversationId;
+		initWidget(uiBinder.createAndBindUi(this));
+		messageTextBox.getElement().setAttribute("placeholder", "Message");
+	}
 
 	public void setSendMessageHandler(SendMessageHandler sendMessageHandler) {
 		this.sendMessageHandler = sendMessageHandler;
@@ -60,12 +67,6 @@ public class ConversationWidget extends Composite {
 		this.title.setText(title);
 	}
 
-	public ConversationWidget(String conversationId) {
-		this.conversationId = conversationId;
-		initWidget(uiBinder.createAndBindUi(this));
-		messageTextBox.getElement().setAttribute("placeholder", "Message");
-	}
-	
 	@UiHandler("backToConversationsClickArea")
 	void handleBackToConversationsClick(ClickEvent evt) {
 		addStyleName("hide-on-phone");
@@ -100,7 +101,7 @@ public class ConversationWidget extends Composite {
 			updateSendButtonEnabledState();
 			if (sendMessageHandler != null) {
 				Message message = sendMessageHandler.sendMessage(getConversationId(), messageString);
-				addSendingMessage(message.getId(), messageString);
+				addSendingMessage(message, messageString);
 			}
 		}
 	}
@@ -142,51 +143,58 @@ public class ConversationWidget extends Composite {
 			needsScrollingDown = false;
 		}
 		GWT.log("scrolling down");
-		messageAreaPanel.getElement().setScrollTop(messageAreaPanel.getElement().getScrollHeight()-messageAreaPanel.getElement().getClientHeight());
+		messageAreaPanel.getElement().setScrollTop(
+				messageAreaPanel.getElement().getScrollHeight() - messageAreaPanel.getElement().getClientHeight());
 	}
-	
-	private HTMLPanel getMessagePanel(String messageId, String message) {
-		HTMLPanel result = messagePanels.get(messageId);
+
+	private MessageWidget getMessageWidget(String messageId, Message message, String plainText) {
+		MessageWidget result = messageWidgets.get(messageId);
 		if (result == null) {
-			result = new HTMLPanel("<div class=\"processing\"></div>" + message);
-			result.addStyleName("message");
-			result.setTitle(messageId);
-			messagePanels.put(messageId, result);
-		} else {
-			result.getElement().setInnerHTML(message);
+			result = new MessageWidget();
+			messageWidgets.put(messageId, result);
 		}
+		result.setContent(message, plainText);
 		return result;
 	}
 
-	public void addReceivedMessage(String messageId, String message) {
-		HTMLPanel messagePanel = getMessagePanel(messageId, message);
-		messagePanel.addStyleName("pull-left");
+	public void addReceivedMessage(Message message, String plainText) {
+		MessageWidget messageWidget = getMessageWidget(message.getId(), message, plainText);
+		messageWidget.setType(Type.RECEIVED);
 		boolean scrollDown = isScrolledDown() || !isActive();
-		messageAreaPanel.add(messagePanel);
+		messageAreaPanel.add(messageWidget);
 		if (scrollDown) {
 			scrollDown();
 		}
 	}
 
-	public void addSentMessage(String messageId, String message) {
-		HTMLPanel messagePanel = getMessagePanel(messageId, message);
-		messagePanel.addStyleName("pull-right");
+	public void addSentMessage(Message message, String plainText) {
+		GWT.log("Sent message: " + plainText);
+		MessageWidget messageWidget = getMessageWidget(message.getId(), message, plainText);
+		messageWidget.setType(Type.SENT);
+		messageWidget.addStyleName("pull-right");
+		for (MessageWidget w: messageWidgets.values()) {
+			if (w.getStatus().equals("Sent")) {
+				w.setStatus("");
+			}
+		}
+		messageWidget.setStatus("Sent");
 		boolean scrollDown = isScrolledDown() || !isActive();
-		messageAreaPanel.add(messagePanel);
+		messageAreaPanel.add(messageWidget);
 		if (scrollDown) {
 			scrollDown();
 		}
 	}
 
-	public void addSendingMessage(String messageId, String message) {
-		HTMLPanel messagePanel = getMessagePanel(messageId, message);
-		messagePanel.addStyleName("pull-right");
-		messagePanel.addStyleName("pending");
+	public void addSendingMessage(Message message, String plainText) {
+		MessageWidget messageWidget = getMessageWidget(message.getId(), message, plainText);
+		messageWidget.setType(Type.SENT);
+		messageWidget.addStyleName("pull-right");
+		messageWidget.setStatus("Sending");
 		boolean scrollDown = isScrolledDown() || !isActive();
-		messageAreaPanel.add(messagePanel);
+		messageAreaPanel.add(messageWidget);
 		if (scrollDown) {
 			scrollDown();
 		}
 	}
-	
+
 }
