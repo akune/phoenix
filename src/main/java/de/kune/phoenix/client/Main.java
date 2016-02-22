@@ -2,8 +2,6 @@ package de.kune.phoenix.client;
 
 import static de.kune.phoenix.client.Animations.fadeIn;
 
-import java.io.UnsupportedEncodingException;
-
 import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.shared.GWT;
@@ -37,26 +35,28 @@ public class Main implements EntryPoint {
 
 	private void handleNewConversation(Conversation.Builder builder) {
 		GWT.log("handle new conversation");
-		chatClientWidget.addConversation(builder.getConversationId(), "Unknown Participant");
-		builder.receivedMessageHandler((m, c) -> handleReceivedMessage(builder.getConversationId(), m, c));
+		ConversationWidget conversationWidget = chatClientWidget.addConversation(builder.getConversationId(), "Unknown Participant");
+		builder.chatClientWidget(chatClientWidget);
+		builder.conversationWidget(conversationWidget);
+//		builder.receivedMessageHandler((m, c) -> handleReceivedMessage(builder.getConversationId(), m, c));
 	}
 
-	private void handleReceivedMessage(String conversationId, Message m, byte[] c) {
-		Conversation conversation = clientSession.getConversation(conversationId);
-		if (conversation != null) {
-			try {
-				if (m.getSenderId().equals(conversation.getSenderId())) {
-					chatClientWidget().addSentMessage(conversationId, m, new String(c, "UTF-8"));
-				} else {
-					chatClientWidget().addReceivedMessage(conversationId, m, new String(c, "UTF-8"));
-				}
-			} catch (UnsupportedEncodingException e) {
-				throw new IllegalStateException("utf-8 not supported");
-			}
-		} else {
-			GWT.log("no such conversation");
-		}
-	}
+//	private void handleReceivedMessage(String conversationId, Message m, byte[] c) {
+//		Conversation conversation = clientSession.getConversation(conversationId);
+//		if (conversation != null) {
+//			try {
+//				if (m.getSenderId().equals(conversation.getSenderId())) {
+//					chatClientWidget().addSentMessage(conversationId, m, new String(c, "UTF-8"));
+//				} else {
+//					chatClientWidget().addReceivedMessage(conversationId, m, new String(c, "UTF-8"));
+//				}
+//			} catch (UnsupportedEncodingException e) {
+//				throw new IllegalStateException("utf-8 not supported");
+//			}
+//		} else {
+//			GWT.log("no such conversation");
+//		}
+//	}
 
 	private ChatClientWidget chatClientWidget() {
 		if (chatClientWidget == null) {

@@ -23,6 +23,7 @@ public class TransientInMemoryObjectStore<T extends Identifiable<I>, I> implemen
 
 	@Override
 	public void add(T object) {
+		// TODO: Prevent adding existing object.
 		objectsLock.writeLock().lock();
 		try {
 			objects.put(object.getId(), object);

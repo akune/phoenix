@@ -28,12 +28,15 @@ public class MessageWidget extends Composite {
 
 	@UiField
 	protected HTMLPanel statusAreaPanel;
+
+	private Type type;
 	
 	public MessageWidget() {
 		initWidget(uiBinder.createAndBindUi(this));
 	}
 
 	public void setType(Type type) {
+		this.type = type;
 		if (type == SENT) {
 			addStyleName("pull-right");
 		} else if (type == RECEIVED) {
@@ -52,6 +55,10 @@ public class MessageWidget extends Composite {
 
 	public String getStatus() {
 		return statusAreaPanel.getElement().getInnerText();
+	}
+
+	public Type getType() {
+		return type;
 	}
 
 }

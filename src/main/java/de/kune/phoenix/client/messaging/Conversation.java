@@ -19,6 +19,8 @@ import java.util.Set;
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.user.client.Timer;
 
+import de.kune.phoenix.client.ChatClientWidget;
+import de.kune.phoenix.client.ConversationWidget;
 import de.kune.phoenix.client.crypto.AsymmetricCipher;
 import de.kune.phoenix.client.crypto.Key;
 import de.kune.phoenix.client.crypto.KeyPair;
@@ -43,7 +45,8 @@ public class Conversation {
 		private String conversationId;
 		private String[] recipientIds;
 		private Map<String, PublicKey> sharedPublicKeys;
-		private MessageHandler receivedMessageHandler;
+		private ConversationWidget conversationWidget;
+		private ChatClientWidget chatClientWidget;
 
 		public Builder keyPair(KeyPair keyPair) {
 			this.keyPair = keyPair;
@@ -65,22 +68,29 @@ public class Conversation {
 			return this;
 		}
 
-		public Builder receivedMessageHandler(MessageHandler receivedMessageHandler) {
-			this.receivedMessageHandler = receivedMessageHandler;
+		public Builder conversationWidget(ConversationWidget conversationWidget) {
+			this.conversationWidget = conversationWidget;
+			return this;
+		}
+
+		public Builder chatClientWidget(ChatClientWidget chatClientWidget) {
+			this.chatClientWidget = chatClientWidget;
 			return this;
 		}
 
 		public Conversation build() {
 			if (keyPair == null || conversationId == null || recipientIds == null || recipientIds.length == 0
-					|| sharedPublicKeys == null || receivedMessageHandler == null) {
+					|| sharedPublicKeys == null || conversationWidget == null || chatClientWidget == null) {
 				throw new IllegalStateException("unset field(s)");
 			}
-			return new Conversation(keyPair, sharedPublicKeys, conversationId, recipientIds, receivedMessageHandler);
+			return new Conversation(keyPair, sharedPublicKeys, conversationId, recipientIds, chatClientWidget,
+					conversationWidget);
 		}
 
 		public String getConversationId() {
 			return conversationId;
 		}
+
 	}
 
 	private SecretKey secretKey() {
@@ -95,16 +105,19 @@ public class Conversation {
 	private final MessageService messageService = MessageService.instance();
 	private final String conversationId;
 	private final Map<String, PublicKey> sharedPublicKeys;
-	private Set<String> participants = new HashSet<>();
 	private final KeyStore<SecretKey> secretKeyStore;
-	private final MessageHandler receivedMessageHandler;
+	private final ConversationWidget conversationWidget;
+	private final ChatClientWidget chatClientWidget;
+	private final Set<String> participants = new HashSet<>();
+	private final List<String> sentReceiveConfirmations = new ArrayList<>();
 
 	private Conversation(KeyPair keyPair, Map<String, PublicKey> sharedPublicKeys, String conversationId,
-			String[] recipientIds, MessageHandler receivedMessageHandler) {
+			String[] recipientIds, ChatClientWidget chatClientWidget, ConversationWidget conversationWidget) {
 		this.secretKeyStore = new DeprecatingSecretKeyStore(keyPair);
 		this.sharedPublicKeys = sharedPublicKeys;
 		this.conversationId = conversationId;
-		this.receivedMessageHandler = receivedMessageHandler;
+		this.chatClientWidget = chatClientWidget;
+		this.conversationWidget = conversationWidget;
 		participants.addAll(Arrays.asList(recipientIds));
 		messageService.addMessageHandler(isFromValidSenderToMe().and(isSecretKey()), this::handleSecretKey);
 		messageService.addMessageHandler(isFromValidSenderToMe().and(isIntroduction()), this::handleIntroduction);
@@ -127,7 +140,7 @@ public class Conversation {
 
 	private void handleSecretKey(Message message, byte[] data) {
 		GWT.log("received secret key message: " + message);
-		decrypt(message, (m, c) -> secretKeyStore.addKey(SymmetricCipher.Factory.createSecretKey(c)));
+		decryptAndHandle(message, (m, c) -> secretKeyStore.addKey(SymmetricCipher.Factory.createSecretKey(c)));
 	}
 
 	private void handleIntroduction(Message message, byte[] data) {
@@ -138,14 +151,15 @@ public class Conversation {
 		secretKeyStore.deprecateAllKeys();
 	}
 
-	private List<String> sentReceiveConfirmations = new ArrayList<>();
-
 	private void handleReceiveConfirmation(Message message, byte[] data) {
 		try {
 			String messageId = new String(message.getContent(), "UTF-8");
 			String recipient = message.getSenderId();
 			if (secretKeyStore.getKeyPair().getPublicKey().getId().equals(recipient)) {
 				sentReceiveConfirmations.add(messageId);
+			}
+			if (!secretKeyStore.getKeyPair().getPublicKey().getId().equals(message.getSenderId())) {
+				conversationWidget.addReceiveConfirmation(messageId, message);
 			}
 			GWT.log("message [" + messageId + "] was received by [" + message.getSenderId() + "]");
 		} catch (UnsupportedEncodingException e) {
@@ -155,17 +169,28 @@ public class Conversation {
 
 	private void handleTextMessage(Message message, byte[] data) {
 		GWT.log("received text message: " + message);
-		decrypt(message, (m, c) -> receivedMessageHandler.handleReceivedMessage(m, c));
-		new Timer() {
-			public void run() {
-				if (!sentReceiveConfirmations.contains(message.getId())) {
-					messageService.send(received(message, secretKeyStore.getKeyPair()));
+		decryptAndHandle(message, (m, d) -> {
+			try {
+				if (m.getSenderId().equals(getSenderId())) {
+					chatClientWidget.addSentMessage(conversationId, m, new String(d, "UTF-8"));
+				} else {
+					chatClientWidget.addReceivedMessage(conversationId, m, new String(d, "UTF-8"));
 				}
+			} catch (UnsupportedEncodingException e) {
+				throw new IllegalStateException("utf-8 not supported");
 			}
-		}.schedule(100);
+
+			new Timer() {
+				public void run() {
+					if (!sentReceiveConfirmations.contains(m.getId())) {
+						messageService.send(received(m, secretKeyStore.getKeyPair()));
+					}
+				}
+			}.schedule(100);
+		});
 	}
 
-	private void decrypt(Message message, MessageHandler messageHandler) {
+	private void decryptAndHandle(Message message, MessageHandler messageHandler) {
 		if (message.getKeyId() == null) {
 			throw new IllegalStateException("tried to decrypt unencrypted message");
 		}

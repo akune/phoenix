@@ -197,4 +197,16 @@ public class ConversationWidget extends Composite {
 		}
 	}
 
+	public void addReceiveConfirmation(String messageId, Message confirmationMessage) {
+		MessageWidget messageWidget = messageWidgets.get(messageId);
+		if (messageWidget != null && messageWidget.getType() == Type.SENT) {
+			for (MessageWidget w: messageWidgets.values()) {
+				if (w.getStatus().equals("Received")) {
+					w.setStatus("");
+				}
+			}
+			messageWidget.setStatus("Received");
+		}
+	}
+
 }

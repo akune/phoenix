@@ -138,7 +138,7 @@ public class ChatClientWidget extends Composite {
 		getConversationWidget(conversationId).addSentMessage(message, plainText);
 	}
 
-	public void addConversation(String conversationId, String title) {
+	public ConversationWidget addConversation(String conversationId, String title) {
 		ConversationWidget conversation = new ConversationWidget(conversationId);
 		conversation.setSendMessageHandler((cId, textMessage) -> sendMessage(conversationId, textMessage));
 		conversation.setTitle(title);
@@ -161,6 +161,7 @@ public class ChatClientWidget extends Composite {
 
 		});
 		conversationEntriesPanel.add(entry);
+		return conversation;
 	}
 
 	protected void closeConversation(String conversationId) {
