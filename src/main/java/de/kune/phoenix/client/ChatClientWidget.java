@@ -46,7 +46,7 @@ public class ChatClientWidget extends Composite {
 
 	@UiField
 	HTMLPanel conversationEntriesPanel;
-	
+
 	@UiField
 	HTMLPanel connectionLostPanel;
 
@@ -58,12 +58,12 @@ public class ChatClientWidget extends Composite {
 	void handleShowInfoClick(ClickEvent evt) {
 		activateConversation(null);
 	}
-	
+
 	@UiHandler("cancelCreateConversationClickArea")
 	void handleCancelCreateConversationClick(ClickEvent evt) {
 		closeSearchPanel();
 	}
-	
+
 	public void closeSearchPanel() {
 		Animations.fadeOut(newConversationPanel).run(150);
 		Animations.fadeIn(conversationsPanel).run(150);
@@ -81,7 +81,8 @@ public class ChatClientWidget extends Composite {
 			public void run() {
 				searchTextBox.setFocus(true);
 			}
-		}.schedule(100);;
+		}.schedule(100);
+		;
 	}
 
 	@UiHandler("searchTextBox")
@@ -245,6 +246,13 @@ public class ChatClientWidget extends Composite {
 
 	public void setConnectionState(boolean connected) {
 		connectionLostPanel.setVisible(!connected);
+	}
+
+	public void addReceiveConfirmation(String messageId, Message confirmationMessage) {
+		ConversationWidget conversationWidget = getConversationWidget(confirmationMessage.getConversationId());
+		if (conversationWidget != null) {
+			conversationWidget.addReceiveConfirmation(messageId, confirmationMessage);
+		}
 	}
 
 }

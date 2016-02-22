@@ -20,7 +20,6 @@ import com.google.gwt.core.shared.GWT;
 import com.google.gwt.user.client.Timer;
 
 import de.kune.phoenix.client.ChatClientWidget;
-import de.kune.phoenix.client.ConversationWidget;
 import de.kune.phoenix.client.crypto.AsymmetricCipher;
 import de.kune.phoenix.client.crypto.Key;
 import de.kune.phoenix.client.crypto.KeyPair;
@@ -45,7 +44,6 @@ public class Conversation {
 		private String conversationId;
 		private String[] recipientIds;
 		private Map<String, PublicKey> sharedPublicKeys;
-		private ConversationWidget conversationWidget;
 		private ChatClientWidget chatClientWidget;
 
 		public Builder keyPair(KeyPair keyPair) {
@@ -68,11 +66,6 @@ public class Conversation {
 			return this;
 		}
 
-		public Builder conversationWidget(ConversationWidget conversationWidget) {
-			this.conversationWidget = conversationWidget;
-			return this;
-		}
-
 		public Builder chatClientWidget(ChatClientWidget chatClientWidget) {
 			this.chatClientWidget = chatClientWidget;
 			return this;
@@ -80,11 +73,10 @@ public class Conversation {
 
 		public Conversation build() {
 			if (keyPair == null || conversationId == null || recipientIds == null || recipientIds.length == 0
-					|| sharedPublicKeys == null || conversationWidget == null || chatClientWidget == null) {
+					|| sharedPublicKeys == null || chatClientWidget == null) {
 				throw new IllegalStateException("unset field(s)");
 			}
-			return new Conversation(keyPair, sharedPublicKeys, conversationId, recipientIds, chatClientWidget,
-					conversationWidget);
+			return new Conversation(keyPair, sharedPublicKeys, conversationId, recipientIds, chatClientWidget);
 		}
 
 		public String getConversationId() {
@@ -106,18 +98,16 @@ public class Conversation {
 	private final String conversationId;
 	private final Map<String, PublicKey> sharedPublicKeys;
 	private final KeyStore<SecretKey> secretKeyStore;
-	private final ConversationWidget conversationWidget;
 	private final ChatClientWidget chatClientWidget;
 	private final Set<String> participants = new HashSet<>();
 	private final List<String> sentReceiveConfirmations = new ArrayList<>();
 
 	private Conversation(KeyPair keyPair, Map<String, PublicKey> sharedPublicKeys, String conversationId,
-			String[] recipientIds, ChatClientWidget chatClientWidget, ConversationWidget conversationWidget) {
+			String[] recipientIds, ChatClientWidget chatClientWidget) {
 		this.secretKeyStore = new DeprecatingSecretKeyStore(keyPair);
 		this.sharedPublicKeys = sharedPublicKeys;
 		this.conversationId = conversationId;
 		this.chatClientWidget = chatClientWidget;
-		this.conversationWidget = conversationWidget;
 		participants.addAll(Arrays.asList(recipientIds));
 		messageService.addMessageHandler(isFromValidSenderToMe().and(isSecretKey()), this::handleSecretKey);
 		messageService.addMessageHandler(isFromValidSenderToMe().and(isIntroduction()), this::handleIntroduction);
@@ -159,7 +149,7 @@ public class Conversation {
 				sentReceiveConfirmations.add(messageId);
 			}
 			if (!secretKeyStore.getKeyPair().getPublicKey().getId().equals(message.getSenderId())) {
-				conversationWidget.addReceiveConfirmation(messageId, message);
+				chatClientWidget.addReceiveConfirmation(messageId, message);
 			}
 			GWT.log("message [" + messageId + "] was received by [" + message.getSenderId() + "]");
 		} catch (UnsupportedEncodingException e) {
