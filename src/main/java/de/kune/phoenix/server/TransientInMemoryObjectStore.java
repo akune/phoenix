@@ -23,9 +23,11 @@ public class TransientInMemoryObjectStore<T extends Identifiable<I>, I> implemen
 
 	@Override
 	public void add(T object) {
-		// TODO: Prevent adding existing object.
 		objectsLock.writeLock().lock();
 		try {
+			if (objects.containsKey(object.getId())) {
+				throw new IllegalArgumentException(format("object with id [%s] already exists", object.getId()));
+			}
 			objects.put(object.getId(), object);
 			objectAdded.signalAll();
 		} finally {
@@ -37,6 +39,9 @@ public class TransientInMemoryObjectStore<T extends Identifiable<I>, I> implemen
 	public void update(T object) {
 		objectsLock.writeLock().lock();
 		try {
+			if (!objects.containsKey(object.getId())) {
+				throw new IllegalArgumentException(format("object with id [%s] does not exist", object.getId()));
+			}
 			if (objects.containsKey(object.getId())) {
 				objects.put(object.getId(), object);
 			} else {
@@ -132,7 +137,7 @@ public class TransientInMemoryObjectStore<T extends Identifiable<I>, I> implemen
 			objectsLock.readLock().unlock();
 		}
 	}
-	
+
 	public String toString() {
 		return getClass().getName() + objects.toString();
 	}
