@@ -9,9 +9,9 @@ import de.kune.phoenix.shared.Identifiable;
  * Specifies an object store.
  *
  * @param <T>
- *            the element type
+ *            the identifiable element type
  */
-public interface ObjectStore<T extends Identifiable<?>> {
+public interface ObjectStore<T extends Identifiable<I>, I> {
 
 	/**
 	 * Adds the specified element to this store.
@@ -80,16 +80,7 @@ public interface ObjectStore<T extends Identifiable<?>> {
 	 * 
 	 * @return an id string
 	 */
-	String generateId();
-
-	/**
-	 * Updates the specified object. Adds the object to this store if it does
-	 * not exist.
-	 * 
-	 * @param object
-	 *            the object
-	 */
-	void update(T object);
+	String generateSequenceKey();
 
 	/**
 	 * Checks if this store contains a message with the specified id.
@@ -98,6 +89,6 @@ public interface ObjectStore<T extends Identifiable<?>> {
 	 *            the id
 	 * @return true if the store contains the specified message, else false
 	 */
-	boolean contains(String id);
+	boolean contains(I id);
 
 }

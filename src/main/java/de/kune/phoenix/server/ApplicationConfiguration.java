@@ -12,7 +12,7 @@ public class ApplicationConfiguration {
 
 	@Bean
 	@Singleton
-	public ObjectStore<Message> messageStore() {
+	public ObjectStore<Message, String> messageStore() {
 		return new TransientInMemoryObjectStore<>();
 	}
 

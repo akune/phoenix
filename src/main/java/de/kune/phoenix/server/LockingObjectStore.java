@@ -23,7 +23,7 @@ public abstract class LockingObjectStore<T extends Identifiable<I>, I> implement
 		objectsLock.writeLock().lock();
 		try {
 			if (doesContain(object.getId())) {
-				throw new IllegalArgumentException(format("object with id [%s] already exists", object.getId()));
+				throw new IllegalStateException(format("object with id [%s] already exists", object.getId()));
 			}
 			doPut(object);
 			objectAdded.signalAll();
@@ -67,30 +67,42 @@ public abstract class LockingObjectStore<T extends Identifiable<I>, I> implement
 
 	@Override
 	public Set<T> get(Predicate<T> predicate) {
-		Set<T> result = get();
-		for (Iterator<T> it = result.iterator(); it.hasNext();) {
-			if (!predicate.test(it.next())) {
-				it.remove();
+		objectsLock.readLock().lock();
+		try {
+			Set<T> result = get();
+			for (Iterator<T> it = result.iterator(); it.hasNext();) {
+				if (!predicate.test(it.next())) {
+					it.remove();
+				}
 			}
+			return result;
+		} finally {
+			objectsLock.readLock().unlock();
 		}
-		return result;
 	}
 
 	@Override
 	public void remove(Predicate<T> predicate) {
 		objectsLock.writeLock().lock();
-		for (Iterator<T> it = doIterate(); it.hasNext();) {
-			if (predicate.test(it.next())) {
-				it.remove();
+		try {
+			for (Iterator<T> it = doIterate(); it.hasNext();) {
+				if (predicate.test(it.next())) {
+					it.remove();
+				}
 			}
+		} finally {
+			objectsLock.writeLock().unlock();
 		}
-		objectsLock.writeLock().unlock();
 	}
 
 	@Override
 	public void remove(T object) {
 		objectsLock.writeLock().lock();
-		objectsLock.writeLock().unlock();
+		try {
+			doRemove(object.getId());
+		} finally {
+			objectsLock.writeLock().unlock();
+		}
 	}
 
 	@Override
@@ -131,11 +143,13 @@ public abstract class LockingObjectStore<T extends Identifiable<I>, I> implement
 			objectsLock.readLock().unlock();
 		}
 	}
-	
+
+	protected abstract void doRemove(I id);
+
 	protected abstract void doClear();
 
 	protected abstract boolean doesContain(I id);
-	
+
 	protected abstract void doPut(T object);
 
 	protected abstract Set<T> doGetAll();

@@ -22,14 +22,14 @@ import de.kune.phoenix.shared.Message;
 public class MessageResource {
 
 	@Inject
-	private ObjectStore<Message> messageStore;
+	private ObjectStore<Message, String> messageStore;
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response post(List<Message> messages) {
 		for (Message message : messages) {
 			if (!messageStore.contains(message.getId())) {
-				message.setSequenceKey(messageStore.generateId());
+				message.setSequenceKey(messageStore.generateSequenceKey());
 				messageStore.add(message);
 			}
 		}

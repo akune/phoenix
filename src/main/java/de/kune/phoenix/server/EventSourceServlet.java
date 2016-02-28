@@ -30,7 +30,7 @@ public class EventSourceServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
 	@Inject
-	private ObjectStore<Message> messageStore;
+	private ObjectStore<Message, String> messageStore;
 
 	@Override
 	public void init() throws ServletException {
@@ -42,12 +42,12 @@ public class EventSourceServlet extends HttpServlet {
 
 	private static class MessageTransmitter implements Runnable {
 		private ObjectMapper objectMapper = new ObjectMapper();
-		private ObjectStore<Message> messageStore;
+		private ObjectStore<Message, String> messageStore;
 		private String recipientId;
 		private String lastTransmission;
 		private PrintWriter out;
 
-		public MessageTransmitter(ObjectStore<Message> messageStore, String recipientId, String lastTransmission,
+		public MessageTransmitter(ObjectStore<Message, String> messageStore, String recipientId, String lastTransmission,
 				PrintWriter out) {
 			this.messageStore = messageStore;
 			this.recipientId = recipientId;
