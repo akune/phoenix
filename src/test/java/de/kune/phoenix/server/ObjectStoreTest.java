@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -25,9 +26,8 @@ public class ObjectStoreTest {
 
 	@Parameters
 	public static Collection<Object[]> data() {
-		return asList(new Object[][] { { new TransientInMemoryObjectStore<>() }
-				// , { new FileSystemBackedObjectStore<>() }
-		});
+		return asList(new Object[][] { { new TransientInMemoryObjectStore<>() },
+				{ FileSystemBackedObjectStore.getInstance("test-store") } });
 	}
 
 	private ObjectStore<TestElement, String> store;
@@ -39,6 +39,7 @@ public class ObjectStoreTest {
 	@Before
 	public void setUp() {
 		store.clear();
+		assertThat(store.get()).isEmpty();
 	}
 
 	@Test
@@ -48,7 +49,7 @@ public class ObjectStoreTest {
 
 	@Test
 	public void should_be_empty_after_clear() {
-		store.add(new TestElement());
+		store.add(testElement());
 		assertThat(store.get()).isNotEmpty();
 		store.clear();
 		assertThat(store.get()).isEmpty();
@@ -56,13 +57,13 @@ public class ObjectStoreTest {
 
 	@Test
 	public void should_contain_any_element_after_add() {
-		store.add(new TestElement());
+		store.add(testElement());
 		assertThat(store.any()).isNotNull();
 	}
 
 	@Test
 	public void shold_not_contain_element_after_remove() {
-		TestElement testElement = new TestElement();
+		TestElement testElement = testElement();
 		store.add(testElement);
 		assertThat(store.contains(testElement.getId())).isTrue();
 		store.remove(testElement);
@@ -71,33 +72,32 @@ public class ObjectStoreTest {
 
 	@Test
 	public void shold_not_contain_element_after_remove_by_predicate() {
-		TestElement testElement = new TestElement();
-		store.add(testElement);
-		assertThat(store.contains(testElement.getId())).isTrue();
-		store.remove(e -> e.getId().equals(testElement.getId()));
-		assertThat(store.contains(testElement.getId())).isFalse();
+		List<TestElement> testElements = asList(testElement(), testElement());
+		store.add(testElements.get(0));
+		store.add(testElements.get(1));
+		assertThat(store.contains(testElements.get(0).getId())).isTrue();
+		store.remove(e -> e.getId().equals(testElements.get(0).getId()));
+		assertThat(store.contains(testElements.get(0).getId())).isFalse();
+		assertThat(store.contains(testElements.get(1).getId())).isTrue();
 	}
 
 	@Test
 	public void should_get_element_by_predicate_after_add() {
-		TestElement testElement = new TestElement();
-		assertThat(store.get()).isEmpty();
+		TestElement testElement = testElement();
 		store.add(testElement);
 		assertThat(store.get(e -> e.getId().equals(testElement.getId()))).isNotEmpty();
 	}
 
 	@Test(expected = IllegalStateException.class)
 	public void should_fail_to_add_one_element_twice() {
-		TestElement testElement = new TestElement();
-		assertThat(store.get()).isEmpty();
+		TestElement testElement = testElement();
 		store.add(testElement);
 		store.add(testElement);
 	}
 
 	@Test
 	public void should_get_all_elements_after_add() {
-		List<TestElement> testElements = asList(new TestElement(), new TestElement());
-		assertThat(store.get()).isEmpty();
+		List<TestElement> testElements = asList(testElement(), testElement());
 		store.add(testElements.get(0));
 		store.add(testElements.get(1));
 		assertThat(store.get().size()).isSameAs(testElements.size());
@@ -115,7 +115,7 @@ public class ObjectStoreTest {
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-				store.add(new TestElement());
+				store.add(testElement());
 			}
 		}.start();
 		Set<TestElement> result = store.await(t -> true);
@@ -124,7 +124,7 @@ public class ObjectStoreTest {
 
 	@Test(timeout = 15000)
 	public void should_wait_for_objects_being_added_multi_threaded() {
-		execute(store, 500, store::add, TestElement::new);
+		execute(store, 500, store::add, this::testElement);
 		while (store.get().size() < 500) {
 			assertThat(store.await(t -> true)).isNotEmpty();
 		}
@@ -165,17 +165,37 @@ public class ObjectStoreTest {
 		}
 	}
 
-	private class TestElement implements Identifiable<String> {
+	private TestElement testElement() {
+		TestElement result = new TestElement();
+		result.setId(store.generateSequenceKey());
+		return result;
+	}
 
-		private final String id;
+	public static class TestElement implements Identifiable<String> {
 
-		public TestElement() {
-			this.id = store.generateSequenceKey();
+		private String id;
+
+		public void setId(String id) {
+			this.id = id;
 		}
 
 		@Override
 		public String getId() {
 			return id;
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(id);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (obj instanceof TestElement) {
+				return Objects.equals(id, ((TestElement) obj).getId());
+			} else {
+				return false;
+			}
 		}
 
 	}

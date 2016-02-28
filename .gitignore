@@ -7,3 +7,4 @@ target
 .springBeans
 gwt-unitCache
 war
+test-store
