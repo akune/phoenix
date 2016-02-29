@@ -34,12 +34,11 @@ public class FileSystemBackedObjectStore<T extends Identifiable<I>, I> extends L
 		return store;
 	}
 
-//	private static final String filenameTemplate = "${id}[${type}.json";
 	private static final Pattern filenamePattern = Pattern.compile("(?<id>.*?)\\[(?<type>.*?)\\]\\.json");
 
 	private ObjectMapper mapper = new ObjectMapper();
 
-	@Value("${filesystemlocation:storage}")
+	@Value("${filesystemlocation:store}")
 	private String fileSystemLocation;
 
 	private Path path;
