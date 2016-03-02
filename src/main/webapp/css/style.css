@@ -1,5 +1,5 @@
-@import url('//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css');
-@import url('//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css');
+@import url('bootstrap.min.css');
+@import url('bootstrap-theme.min.css');
 @external *;
 html {
   padding: 0;
