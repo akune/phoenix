@@ -142,7 +142,6 @@ public class ConversationWidget extends Composite {
 		} else {
 			needsScrollingDown = false;
 		}
-		GWT.log("scrolling down");
 		messageAreaPanel.getElement().setScrollTop(
 				messageAreaPanel.getElement().getScrollHeight() - messageAreaPanel.getElement().getClientHeight());
 	}
@@ -168,7 +167,6 @@ public class ConversationWidget extends Composite {
 	}
 
 	public void addSentMessage(Message message, String plainText) {
-		GWT.log("Sent message: " + plainText);
 		MessageWidget messageWidget = getMessageWidget(message.getId(), message, plainText);
 		messageWidget.setType(Type.SENT);
 		messageWidget.addStyleName("pull-right");
