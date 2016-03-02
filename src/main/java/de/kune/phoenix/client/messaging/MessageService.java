@@ -1,7 +1,11 @@
 package de.kune.phoenix.client.messaging;
 
+import static de.kune.phoenix.shared.Messages.SEQUENCE_KEY_ORDER;
+
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +27,10 @@ import de.kune.phoenix.shared.Message;
 
 public class MessageService {
 
+	public static interface ConnectionStateChangeHandler {
+		void handleConnectionStateChange(MessageService service);
+	}
+
 	private static final MessageService instance = new MessageService();
 	private static final int pollInterval = 250;
 
@@ -33,6 +41,8 @@ public class MessageService {
 	private final RestMessageService restMessageService;
 	private final Timer pollingRestReceiverTimer = new Timer() {
 		private int connectionFailureCount = 0;
+//		private Message lastReceivedMessage;
+		private String lastReceivedSequenceKey;
 
 		@Override
 		public void run() {
@@ -47,9 +57,20 @@ public class MessageService {
 						invokeConnectionStateChangeHandlers();
 					}
 					GWT.log("received messages " + response);
-					for (Message m : response) {
-						handleReceivedMessage(m);
+					for (Message r : response) {
+						if (lastReceivedSequenceKey == null
+								|| r.getSequenceKey().compareTo(lastReceivedSequenceKey) > 0) {
+							lastReceivedSequenceKey = r.getSequenceKey();
+						}
 					}
+					incomingMessageProcessingQueue.addAll(response);
+					Collections.sort(incomingMessageProcessingQueue, SEQUENCE_KEY_ORDER);
+					if (!incomingMessageProcessingQueue.isEmpty()) {
+						messageProcessor.schedule(10);
+					}
+					// for (Message m : response) {
+					// handleReceivedMessage(m);
+					// }
 					pollingRestReceiverTimer.schedule(pollInterval);
 				}
 
@@ -67,21 +88,42 @@ public class MessageService {
 					pollingRestReceiverTimer.schedule(delay);
 				}
 			};
-			restMessageService.get(connected, lastReceivedMessage == null ? null : lastReceivedMessage.getSequenceKey(),
+			GWT.log("last received sequence key: "
+					+ lastReceivedSequenceKey);
+			restMessageService.get(connected, lastReceivedSequenceKey,
 					recipientId, messageHandler);
 		}
 	};
 
-	public static interface ConnectionStateChangeHandler {
-		void handleConnectionStateChange(MessageService service);
-	}
+	private final Timer messageProcessor = new Timer() {
+
+		@Override
+		public void run() {
+			int counter = 0;
+			while (!incomingMessageProcessingQueue
+					.isEmpty()/* || counter >= 15 */) {
+				Iterator<Message> iterator = incomingMessageProcessingQueue.iterator();
+				if (iterator.hasNext()) {
+					Message message = iterator.next();
+					iterator.remove();
+					handleReceivedMessage(message);
+				}
+				counter++;
+			}
+			GWT.log("Received " + counter + " messages");
+			// if (counter >= 15) {
+			// messageProcessor.schedule(10);
+			// }
+		}
+
+	};
 
 	private boolean connected;
 	private List<ConnectionStateChangeHandler> connectionStateChangeHandlers = new ArrayList<>();
 	private String recipientId;
 	private Map<Predicate<Message>, MessageHandler> messageHandlers = new LinkedHashMap<>();
-	private Message lastReceivedMessage;
-	private List<Message> queuedMessages = new ArrayList<>();
+	private List<Message> outgoingMessageQueue = new ArrayList<>();
+	private List<Message> incomingMessageProcessingQueue = new ArrayList<>();
 
 	private MessageService() {
 		Defaults.setServiceRoot(com.google.gwt.core.client.GWT.getModuleBaseURL()
@@ -102,7 +144,7 @@ public class MessageService {
 	}
 
 	public List<Message> enqueue(List<Message> messages) {
-		queuedMessages.addAll(messages);
+		outgoingMessageQueue.addAll(messages);
 		return messages;
 	}
 
@@ -138,7 +180,8 @@ public class MessageService {
 	 * @param failureHandler
 	 *            the failure handler
 	 */
-	public Message send(Message message, SuccessHandler<Message> successHandler, FailureHandler<Message> failureHandler) {
+	public Message send(Message message, SuccessHandler<Message> successHandler,
+			FailureHandler<Message> failureHandler) {
 		return send(Arrays.<Message> asList(message), successHandler, failureHandler).iterator().next();
 	}
 
@@ -193,8 +236,8 @@ public class MessageService {
 	public List<Message> send(List<Message> messages, SuccessHandler<Message> successHandler,
 			FailureHandler<Message> failureHandler) {
 		List<Message> messagesToSend = new ArrayList<>();
-		messagesToSend.addAll(queuedMessages);
-		queuedMessages.clear();
+		messagesToSend.addAll(outgoingMessageQueue);
+		outgoingMessageQueue.clear();
 		messagesToSend.addAll(messages);
 		restMessageService.post(messagesToSend, new MethodCallback<Void>() {
 			@Override
@@ -214,6 +257,20 @@ public class MessageService {
 		return messages;
 	}
 
+	public void get(String messageId, SuccessHandler<Message> successHandler, FailureHandler<Message> failureHandler) {
+		restMessageService.get(messageId, new MethodCallback<Message>() {
+			@Override
+			public void onFailure(Method method, Throwable exception) {
+				failureHandler.handle(exception, null);
+			}
+
+			@Override
+			public void onSuccess(Method method, Message response) {
+				successHandler.handle(response);
+			}
+		});
+	}
+
 	/**
 	 * Registers a message handler. Message handlers will be invoked in the same
 	 * order as they have been registered.
@@ -228,16 +285,28 @@ public class MessageService {
 		messageHandlers.put(predicate, messageHandler);
 	}
 
-	private void handleReceivedMessage(Message message) {
-		lastReceivedMessage = message;
-		List<MessageHandler> handlers = new ArrayList<>();
+	private void handleReceivedMessage(final Message message) {
+		// lastReceivedMessage = message;
+		final List<MessageHandler> handlers = new ArrayList<>();
 		for (Entry<Predicate<Message>, MessageHandler> e : messageHandlers.entrySet()) {
 			if (e.getKey().test(message)) {
 				handlers.add(e.getValue());
 			}
 		}
-		for (MessageHandler h : handlers) {
-			h.handleReceivedMessage(message, null);
+		Runnable handler = () -> {
+			for (MessageHandler h : handlers) {
+				h.handleReceivedMessage(message, null);
+			}
+		};
+		try {
+			handler.run();
+		} catch (IllegalStateException e) {
+			new Timer() {
+				@Override
+				public void run() {
+					handler.run();
+				}
+			}.schedule(0);
 		}
 	}
 

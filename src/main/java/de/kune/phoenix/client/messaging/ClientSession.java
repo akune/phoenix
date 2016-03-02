@@ -2,8 +2,9 @@ package de.kune.phoenix.client.messaging;
 
 import static de.kune.phoenix.client.crypto.AsymmetricCipher.Factory.createPublicKey;
 import static de.kune.phoenix.client.functional.Predicate.always;
-import static de.kune.phoenix.shared.Message.isIntroduction;
-import static de.kune.phoenix.shared.Message.isSelfSignedPublicKey;
+import static de.kune.phoenix.shared.Messages.isIntroduction;
+import static de.kune.phoenix.shared.Messages.isSelfSignedPublicKey;
+import static de.kune.phoenix.shared.Messages.wasSentBy;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -94,7 +95,7 @@ public class ClientSession {
 	}
 
 	private Predicate<Message> wasSentByMe() {
-		return Message.wasSentBy(recipientId);
+		return wasSentBy(recipientId);
 	}
 
 	private Predicate<Message> isMyOwnPublicKey() {
@@ -106,9 +107,6 @@ public class ClientSession {
 			throw new IllegalStateException("unsigned message [" + message + "]");
 		}
 		PublicKey publicKey = getPublicKey(message);
-		if (publicKey == null) {
-			throw new IllegalStateException("unknown public key [" + message.getSenderId() + "]");
-		}
 		if (!message.checkSignature(publicKey)) {
 			throw new IllegalStateException("incorrectly signed message [" + message + "]");
 		}
@@ -118,6 +116,9 @@ public class ClientSession {
 		PublicKey publicKey = sharedPublicKeys.get(message.getSenderId());
 		if (publicKey != null && !publicKey.getId().equals(message.getSenderId())) {
 			throw new IllegalStateException("obtained public key does not match id");
+		}
+		if (publicKey == null) {
+			throw new IllegalStateException("unknown public key [" + message.getSenderId() + "]");
 		}
 		return publicKey;
 	}

@@ -1,11 +1,15 @@
 package de.kune.phoenix.client.messaging;
 
-import static de.kune.phoenix.shared.Message.containsSender;
-import static de.kune.phoenix.shared.Message.hasConversationId;
-import static de.kune.phoenix.shared.Message.isIntroduction;
-import static de.kune.phoenix.shared.Message.isSecretKey;
-import static de.kune.phoenix.shared.Message.isTextMessage;
-import static de.kune.phoenix.shared.Message.received;
+import static de.kune.phoenix.shared.Messages.containsSender;
+import static de.kune.phoenix.shared.Messages.hasConversationId;
+import static de.kune.phoenix.shared.Messages.hasType;
+import static de.kune.phoenix.shared.Messages.introduction;
+import static de.kune.phoenix.shared.Messages.isIntroduction;
+import static de.kune.phoenix.shared.Messages.isSecretKey;
+import static de.kune.phoenix.shared.Messages.isTextMessage;
+import static de.kune.phoenix.shared.Messages.received;
+import static de.kune.phoenix.shared.Messages.signedPublicKey;
+import static de.kune.phoenix.shared.Messages.text;
 import static java.util.Arrays.asList;
 
 import java.io.UnsupportedEncodingException;
@@ -32,6 +36,7 @@ import de.kune.phoenix.client.functional.Predicate;
 import de.kune.phoenix.client.messaging.KeyStore.DeprecatingSecretKeyStore;
 import de.kune.phoenix.shared.Message;
 import de.kune.phoenix.shared.Message.Type;
+import de.kune.phoenix.shared.Messages;
 
 public class Conversation {
 
@@ -117,7 +122,7 @@ public class Conversation {
 	}
 
 	private Predicate<? super Message> isReceiveConfirmation() {
-		return Message.hasType(Type.RECEIVED);
+		return hasType(Type.RECEIVED);
 	}
 
 	private Predicate<Message> isFromValidSenderToMe() {
@@ -207,16 +212,16 @@ public class Conversation {
 	}
 
 	private Message selfSignedPublicKey(PublicKey participant) {
-		return Message.signedPublicKey(participant, secretKeyStore.getKeyPair());
+		return signedPublicKey(participant, secretKeyStore.getKeyPair());
 	}
 
 	private Message introductionMessage(PublicKey participant) {
-		return Message.introduction(participant, conversationId, secretKeyStore.getKeyPair(),
+		return introduction(participant, conversationId, secretKeyStore.getKeyPair(),
 				participants.toArray(new String[0]));
 	}
 
 	public Message send(String text) {
-		return messageService.send(Message.text(text, secretKey(), conversationId, secretKeyStore.getKeyPair(),
+		return messageService.send(text(text, secretKey(), conversationId, secretKeyStore.getKeyPair(),
 				participants.toArray(new String[0])));
 	}
 
@@ -229,7 +234,7 @@ public class Conversation {
 	}
 
 	private Message secretKeyMessage(SecretKey key, PublicKey recipient) {
-		return Message.secretKey(key, conversationId, secretKeyStore.getKeyPair(), recipient);
+		return Messages.secretKey(key, conversationId, secretKeyStore.getKeyPair(), recipient);
 	}
 
 	public String getSenderId() {
