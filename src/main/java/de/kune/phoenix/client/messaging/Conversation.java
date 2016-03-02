@@ -129,7 +129,7 @@ public class Conversation {
 	}
 
 	private void handleSecretKey(Message message, byte[] data) {
-		GWT.log("received secret key message: " + message);
+		GWT.log("received secret key message: " + message.getId());
 		decryptAndHandle(message, (m, c) -> secretKeyStore.addKey(SymmetricCipher.Factory.createSecretKey(c)));
 	}
 
@@ -151,14 +151,14 @@ public class Conversation {
 			if (!secretKeyStore.getKeyPair().getPublicKey().getId().equals(message.getSenderId())) {
 				chatClientWidget.addReceiveConfirmation(messageId, message);
 			}
-			GWT.log("message [" + messageId + "] was received by [" + message.getSenderId() + "]");
+			GWT.log("message [" + messageId + "] was confirmed to be received by [" + message.getSenderId() + "]");
 		} catch (UnsupportedEncodingException e) {
 			throw new IllegalStateException("utf-8 is not supported", e);
 		}
 	}
 
 	private void handleTextMessage(Message message, byte[] data) {
-		GWT.log("received text message: " + message);
+		GWT.log("received text message: " + message.getId());
 		decryptAndHandle(message, (m, d) -> {
 			try {
 				if (m.getSenderId().equals(getSenderId())) {
@@ -176,7 +176,7 @@ public class Conversation {
 						messageService.send(received(m, secretKeyStore.getKeyPair()));
 					}
 				}
-			}.schedule(100);
+			}.schedule(10);
 		});
 	}
 
