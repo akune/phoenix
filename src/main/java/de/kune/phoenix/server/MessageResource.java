@@ -44,7 +44,8 @@ public class MessageResource {
 			return Response.status(200).entity(messageStore.await(hasRecipient(recipientId)
 					.and(hasConversationId(conversationId)).and(wasReceivedAfter(lastSequenceKey)))).build();
 		} else {
-			return Response.status(200).entity(messageStore.get(predicate(recipientId, conversationId))).build();
+			return Response.status(200).entity(messageStore.get(hasRecipient(recipientId)
+					.and(hasConversationId(conversationId)).and(wasReceivedAfter(lastSequenceKey)))).build();
 		}
 	}
 
@@ -56,20 +57,14 @@ public class MessageResource {
 		return m -> (conversationId == null || conversationId.equals(m.getConversationId()));
 	}
 
-	@DELETE
-	public Response clear() {
-		messageStore.clear();
-		return Response.status(200).build();
-	}
-
 	private Predicate<Message> hasRecipient(String recipientId) {
 		return m -> (recipientId == null || contains(m.getRecipientIds(), recipientId));
 	}
 
-	private Predicate<Message> predicate(final String recipientId, final String conversationId) {
-		return (message) -> (recipientId == null || message.getRecipientIds() == null
-				|| contains(message.getRecipientIds(), recipientId))
-				&& (conversationId == null || conversationId.equals(message.getConversationId()));
+	@DELETE
+	public Response clear() {
+		messageStore.clear();
+		return Response.status(200).build();
 	}
 
 }
