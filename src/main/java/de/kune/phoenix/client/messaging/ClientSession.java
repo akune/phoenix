@@ -38,40 +38,43 @@ public class ClientSession {
 			this.conversationInitiationHandler = conversationInitiationHandler;
 			return this;
 		}
-		
+
 		public Builder connectionStateChangeHander(ConnectionStateChangeHandler connectionStateChangeHandler) {
 			this.connectionStateChangeHandler = connectionStateChangeHandler;
 			return this;
 		}
 
 		public ClientSession build() {
-			ClientSession clientSession = new ClientSession(keyPair, conversationInitiationHandler, connectionStateChangeHandler);
+			ClientSession clientSession = new ClientSession(keyPair, conversationInitiationHandler,
+					connectionStateChangeHandler);
 			clientSession.messageService.start(clientSession.recipientId);
 			return clientSession;
 		}
 	}
 
 	private final MessageService messageService = MessageService.instance();
+	private final MessageProcessor messageProcessor = MessageProcessor.instance();
 	private final KeyPair keyPair;
 	private final Map<String, PublicKey> sharedPublicKeys = new HashMap<>();
 	private final ConversationInitiationHandler conversationInitiationHandler;
 	private final String recipientId;
 	private Map<String, Conversation> conversations = new HashMap<>();
 
-	private ClientSession(KeyPair keyPair, ConversationInitiationHandler conversationInitiationHandler, ConnectionStateChangeHandler connectionStateChangeHandler) {
+	private ClientSession(KeyPair keyPair, ConversationInitiationHandler conversationInitiationHandler,
+			ConnectionStateChangeHandler connectionStateChangeHandler) {
 		this.keyPair = keyPair;
 		this.conversationInitiationHandler = conversationInitiationHandler;
 		sharedPublicKeys.put(keyPair.getPublicKey().getId(), keyPair.getPublicKey());
 		recipientId = keyPair.getPublicKey().getId();
-		messageService.addMessageHandler(isSelfSignedPublicKey(), this::handlePublicKeyMessage);
-		messageService.addMessageHandler(always(), this::validateSignature);
-		messageService.addMessageHandler(isIntroductionToNewConversation(), this::handleIntroductionToNewConversation);
+		messageProcessor.addMessageHandler(isSelfSignedPublicKey(), this::handlePublicKeyMessage);
+		messageProcessor.addMessageHandler(always(), this::validateSignature);
+		messageProcessor.addMessageHandler(isIntroductionToNewConversation(),
+				this::handleIntroductionToNewConversation);
 		messageService.addConnectionStateChangeHandler(connectionStateChangeHandler);
 	}
-	
+
 	private Predicate<Message> isIntroductionToNewConversation() {
-		return isIntroduction().and(isMyOwnPublicKey().or(wasSentByMe()))
-				.and(hasUnknownConversationId());
+		return isIntroduction().and(isMyOwnPublicKey().or(wasSentByMe())).and(hasUnknownConversationId());
 	}
 
 	private void handlePublicKeyMessage(Message message, byte[] data) {

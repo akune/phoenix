@@ -4,14 +4,20 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import de.kune.phoenix.shared.Identifiable;
+import de.kune.phoenix.shared.Sequenced;
 
 /**
  * Specifies an object store.
  *
  * @param <T>
- *            the identifiable element type
+ *            the identifiable, sequenced element type
+ * @param <I>
+ *            the id type
+ * @param <S>
+ *            the sequence type
  */
-public interface ObjectStore<T extends Identifiable<I>, I> {
+// TODO: Refactor sequence facet into its own interface
+public interface ObjectStore<T extends Identifiable<I> & Sequenced<S>, I, S extends Comparable<S>> {
 
 	/**
 	 * Adds the specified element to this store.
@@ -76,11 +82,11 @@ public interface ObjectStore<T extends Identifiable<I>, I> {
 	T any();
 
 	/**
-	 * Generates a store-unique id.
+	 * Generates a store-unique sequence id.
 	 * 
-	 * @return an id string
+	 * @return a sequence id
 	 */
-	String generateSequenceKey();
+	S generateSequenceKey();
 
 	/**
 	 * Checks if this store contains a message with the specified id.

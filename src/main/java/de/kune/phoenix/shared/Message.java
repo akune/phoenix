@@ -14,7 +14,7 @@ import de.kune.phoenix.client.crypto.util.Base64Utils;
 import de.kune.phoenix.client.crypto.util.Digest;
 import de.kune.phoenix.client.crypto.util.Sha256;
 
-public class Message implements Identifiable<String> {
+public class Message implements Identifiable<String>, Sequenced<String> {
 
 	public static enum Type {
 		/**

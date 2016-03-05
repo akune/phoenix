@@ -4,19 +4,19 @@ import static java.lang.String.format;
 
 import java.util.Iterator;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
 
 import de.kune.phoenix.shared.Identifiable;
+import de.kune.phoenix.shared.Sequenced;
 
-public abstract class LockingObjectStore<T extends Identifiable<I>, I> implements ObjectStore<T, I> {
+public abstract class LockingObjectStore<T extends Identifiable<I> & Sequenced<S>, I, S extends Comparable<S>>
+		implements ObjectStore<T, I, S> {
 
 	private ReadWriteLock objectsLock = new ReentrantReadWriteLock();
 	private Condition objectAdded = objectsLock.writeLock().newCondition();
-	private static final AtomicLong sequence = new AtomicLong(0L);
 
 	@Override
 	public void add(T object) {
@@ -116,10 +116,12 @@ public abstract class LockingObjectStore<T extends Identifiable<I>, I> implement
 	}
 
 	@Override
-	public String generateSequenceKey() {
-		return format("%025d", sequence.getAndIncrement());
+	public S generateSequenceKey() {
+		return doGenerateSequenceKey();
 	}
-
+	
+	protected abstract S doGenerateSequenceKey();
+	
 	@Override
 	public T any() {
 		objectsLock.readLock().lock();

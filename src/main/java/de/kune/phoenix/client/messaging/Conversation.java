@@ -100,6 +100,7 @@ public class Conversation {
 	}
 
 	private final MessageService messageService = MessageService.instance();
+	private final MessageProcessor messageProcessor = MessageProcessor.instance();
 	private final String conversationId;
 	private final Map<String, PublicKey> sharedPublicKeys;
 	private final KeyStore<SecretKey> secretKeyStore;
@@ -114,10 +115,10 @@ public class Conversation {
 		this.conversationId = conversationId;
 		this.chatClientWidget = chatClientWidget;
 		participants.addAll(Arrays.asList(recipientIds));
-		messageService.addMessageHandler(isFromValidSenderToMe().and(isSecretKey()), this::handleSecretKey);
-		messageService.addMessageHandler(isFromValidSenderToMe().and(isIntroduction()), this::handleIntroduction);
-		messageService.addMessageHandler(isFromValidSenderToMe().and(isTextMessage()), this::handleTextMessage);
-		messageService.addMessageHandler(isFromValidSenderToMe().and(isReceiveConfirmation()),
+		messageProcessor.addMessageHandler(isFromValidSenderToMe().and(isSecretKey()), this::handleSecretKey);
+		messageProcessor.addMessageHandler(isFromValidSenderToMe().and(isIntroduction()), this::handleIntroduction);
+		messageProcessor.addMessageHandler(isFromValidSenderToMe().and(isTextMessage()), this::handleTextMessage);
+		messageProcessor.addMessageHandler(isFromValidSenderToMe().and(isReceiveConfirmation()),
 				this::handleReceiveConfirmation);
 	}
 

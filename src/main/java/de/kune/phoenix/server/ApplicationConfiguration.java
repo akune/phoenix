@@ -18,7 +18,7 @@ public class ApplicationConfiguration {
 
 	@Bean
 	@Singleton
-	public ObjectStore<Message, String> messageStore() {
+	public ObjectStore<Message, String, String> messageStore() {
 		return new FileSystemBackedObjectStore<>();
 	}
 

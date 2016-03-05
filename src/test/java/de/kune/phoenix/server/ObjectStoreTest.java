@@ -19,7 +19,10 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import de.kune.phoenix.shared.Identifiable;
+import de.kune.phoenix.shared.Sequenced;
 
 @RunWith(Parameterized.class)
 public class ObjectStoreTest {
@@ -30,9 +33,9 @@ public class ObjectStoreTest {
 				{ FileSystemBackedObjectStore.getInstance("test-store") } });
 	}
 
-	private ObjectStore<TestElement, String> store;
+	private ObjectStore<TestElement, String, String> store;
 
-	public ObjectStoreTest(ObjectStore<TestElement, String> store) {
+	public ObjectStoreTest(ObjectStore<TestElement, String, String> store) {
 		this.store = store;
 	}
 
@@ -131,7 +134,7 @@ public class ObjectStoreTest {
 		assertThat(store.get().size()).isEqualTo(500);
 	}
 
-	private ExecutorService execute(final ObjectStore<TestElement, String> store, int count,
+	private ExecutorService execute(final ObjectStore<TestElement, String, String> store, int count,
 			Consumer<TestElement> consumer, Supplier<TestElement> supplier) {
 		ExecutorService executor = Executors.newCachedThreadPool();
 		for (int i = 0; i < count; i++) {
@@ -150,7 +153,7 @@ public class ObjectStoreTest {
 		return executor;
 	}
 
-	private void noise(final ObjectStore<TestElement, String> store, ExecutorService executor, int count) {
+	private void noise(final ObjectStore<TestElement, String, String> store, ExecutorService executor, int count) {
 		for (int i = 0; i < count; i++) {
 			executor.submit(new Callable<Void>() {
 				public Void call() {
@@ -171,7 +174,7 @@ public class ObjectStoreTest {
 		return result;
 	}
 
-	public static class TestElement implements Identifiable<String> {
+	public static class TestElement implements Identifiable<String>, Sequenced<String> {
 
 		private String id;
 
@@ -196,6 +199,12 @@ public class ObjectStoreTest {
 			} else {
 				return false;
 			}
+		}
+
+		@Override
+		@JsonIgnore
+		public String getSequenceKey() {
+			return id;
 		}
 
 	}

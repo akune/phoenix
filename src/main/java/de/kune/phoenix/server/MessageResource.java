@@ -22,7 +22,7 @@ import de.kune.phoenix.shared.Message;
 public class MessageResource {
 
 	@Inject
-	private ObjectStore<Message, String> messageStore;
+	private ObjectStore<Message, String, String> messageStore;
 
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)

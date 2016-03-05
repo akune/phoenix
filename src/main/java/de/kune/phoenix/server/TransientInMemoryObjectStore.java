@@ -1,15 +1,22 @@
 package de.kune.phoenix.server;
 
+import static java.lang.String.format;
+
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 import de.kune.phoenix.shared.Identifiable;
+import de.kune.phoenix.shared.Sequenced;
 
-public class TransientInMemoryObjectStore<T extends Identifiable<I>, I> extends LockingObjectStore<T, I> implements ObjectStore<T, I> {
+public class TransientInMemoryObjectStore<T extends Identifiable<I> & Sequenced<String>, I>
+		extends LockingObjectStore<T, I, String> {
 	private Map<I, T> objects = new LinkedHashMap<>();
+
+	private static final AtomicLong sequence = new AtomicLong(0L);
 
 	@Override
 	protected void doClear() {
@@ -44,6 +51,12 @@ public class TransientInMemoryObjectStore<T extends Identifiable<I>, I> extends 
 	@Override
 	protected void doRemove(I id) {
 		objects.remove(id);
-		
+
 	}
+
+	@Override
+	protected String doGenerateSequenceKey() {
+		return format("%025d", sequence.getAndIncrement());
+	}
+
 }
