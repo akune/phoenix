@@ -118,6 +118,10 @@ public final class Messages {
 		return hasType(Message.Type.PLAIN_TEXT);
 	}
 
+	public static Predicate<Message> isParticipant() {
+		return hasType(Message.Type.PARTICIPANT);
+	}
+	
 	/**
 	 * Creates a message predicate that checks if the message is a secret key
 	 * message.
@@ -275,7 +279,7 @@ public final class Messages {
 					"[" + sender.getPublicKey().getId() + "] is not a recipient of [" + sender + "]");
 		}
 		Message result = new Message();
-		// TODO: Create reproducible id hash:
+		// TODO: Create reproducible id hash to allow caching:
 		result.setId(message.getId() + sender.getPublicKey().getId() + Message.Type.RECEIVED.toString());
 		result.setSenderId(sender.getPublicKey().getId());
 		result.setMessageType(Message.Type.RECEIVED);
@@ -288,6 +292,21 @@ public final class Messages {
 		}
 		result.sign(sender.getPrivateKey());
 		return result;
+	}
+	
+	public static Message participant(String screenName, SecretKey secretKey, String conversationId, KeyPair sender, String[] recipients) {
+		Message message = new Message();
+		message.setSenderId(sender.getPublicKey().getId());
+		message.setMessageType(Message.Type.PLAIN_TEXT);
+		message.setRecipientIds(recipients);
+		message.setConversationId(conversationId);
+		try {
+			message.setAndEncryptContent(secretKey, screenName.getBytes("UTF-8"));
+		} catch (UnsupportedEncodingException e) {
+			throw new IllegalStateException("utf-8 is not supported", e);
+		}
+		message.sign(sender.getPrivateKey());
+		return message;
 	}
 
 }

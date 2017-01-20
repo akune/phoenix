@@ -35,6 +35,8 @@ public class Message implements Identifiable<String>, Sequenced<String> {
 		RECEIVED,
 
 		READ,
+		
+		PARTICIPANT, 
 
 	}
 

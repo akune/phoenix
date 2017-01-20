@@ -104,8 +104,7 @@ public class Main implements EntryPoint {
 		try {
 			PublicKey publicKey = AsymmetricCipher.Factory.createPublicKey(searchString);
 			GWT.log("Inviting " + publicKey.getId());
-			Conversation conversation = clientSession.startConversation();
-			conversation.introduce(publicKey);
+			Conversation conversation = clientSession.startConversation(publicKey);
 			chatClientWidget().closeSearchPanel();
 			chatClientWidget().activateConversation(conversation.getConversationId());
 		} catch (RuntimeException e) {

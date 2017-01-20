@@ -126,12 +126,13 @@ public class ClientSession {
 		return publicKey;
 	}
 
-	public Conversation startConversation() {
+	public Conversation startConversation(PublicKey publicKey) {
 		Conversation.Builder builder = Conversation.builder().keyPair(keyPair).sharedPublicKeys(sharedPublicKeys)
 				.conversationId(Identifiable.generateStringId(15)).recipientIds(keyPair.getPublicKey().getId());
 		conversationInitiationHandler.handle(builder);
 		Conversation conversation = builder.build();
 		conversations.put(conversation.getConversationId(), conversation);
+		conversation.introduce(publicKey);
 		return conversation;
 	}
 

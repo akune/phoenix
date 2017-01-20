@@ -217,7 +217,7 @@ public class FileSystemBackedObjectStore<T extends Identifiable<I> & Sequenced<S
 	}
 
 	protected void updateSequence(String sequenceKey) {
-		long value = Long.parseLong(sequenceKey);
+		long value = sequenceKey == null ? 0L : Long.parseLong(sequenceKey);
 		if (sequence.get() < value) {
 			sequence.set(value);
 		}
