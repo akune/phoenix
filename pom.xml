@@ -260,8 +260,8 @@
       <artifactId>docker-maven-plugin</artifactId>
       <version>0.4.3</version>
       <configuration>
-        <imageName>example</imageName>
-        <baseImage>java</baseImage>
+        <imageName>kune/phoenix</imageName>
+        <baseImage>kune/java8</baseImage>
         <entryPoint>["java", "-jar", "/${project.build.finalName}-war-exec.jar"]</entryPoint>
         <!-- copy the service's jar file from target into the root directory of the image -->
         <resources>

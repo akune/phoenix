@@ -1,6 +1,13 @@
 language: java
 jdk: oraclejdk8
 
-sudo: false
+services:
+  - docker
 
-script: mvn clean package
+sudo: required
+
+script:
+  - mvn clean package
+  - mvn docker:build
+  - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
+  - docker push kune/phoenix;
