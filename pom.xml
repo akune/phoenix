@@ -256,8 +256,7 @@
         <configuration>
           <imageName>kune/phoenix</imageName>
           <baseImage>kune/java8</baseImage>
-          <entryPoint>["java", "-jar",
-            "/${project.build.finalName}-war-exec.jar"]</entryPoint>
+          <entryPoint>["java", "-jar", "/${project.build.finalName}-war-exec.jar"]</entryPoint>
           <!-- copy the service's jar file from target into the root directory 
             of the image -->
           <resources>
