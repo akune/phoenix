@@ -87,7 +87,7 @@ public class CipherSuite {
 			GWT.log("initialized cipher suite");
 			callback.onSuccess(null);
 		} else {
-			String script = scripts.iterator().next().replace("{moduleBaseUrl}", GWT.getModuleBaseURL());
+			String script = scripts.iterator().next().replace("{moduleBaseUrl}", GWT.getModuleBaseURL().replaceAll("\\/$", ""));
 			GWT.log("loading script " + script);
 			ScriptInjector.fromUrl(script).setWindow(TOP_WINDOW).setRemoveTag(false)
 					.setCallback(new Callback<Void, Exception>() {
