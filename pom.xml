@@ -47,11 +47,6 @@
       <artifactId>gwt-dev</artifactId>
       <scope>provided</scope>
     </dependency>
-<!--     <dependency> -->
-<!--       <groupId>com.google.gwt</groupId> -->
-<!--       <artifactId>gwt-elemental</artifactId> -->
-<!--       <scope>provided</scope> -->
-<!--     </dependency> -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -65,15 +60,15 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.seleniumhq.selenium</groupId>
-      <artifactId>selenium-java</artifactId>
-      <version>3.0.1</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.fusesource.restygwt</groupId>
       <artifactId>restygwt</artifactId>
       <version>2.0.3</version>
+    </dependency>
+    <dependency>
+      <groupId>com.github.neothemachine</groupId>
+      <artifactId>gwt-phantomjs-junit-runstyle</artifactId>
+      <version>1.0.1</version>
+      <scope>test</scope>
     </dependency>
 
     <!-- server side dependencies -->
@@ -212,8 +207,7 @@
           <modules>
             <module>de.kune.phoenix.main</module>
           </modules>
-          <mode>selenium</mode>
-          <selenium>127.0.0.1:4444/firefox</selenium>
+          <mode>com.github.neothemachine.gwt.junit.RunStylePhantomJS</mode>
           <productionMode>true</productionMode>
           <testTimeOut>300</testTimeOut>
         </configuration>
@@ -255,24 +249,26 @@
           </execution>
         </executions>
       </plugin>
-    <plugin>
-      <groupId>com.spotify</groupId>
-      <artifactId>docker-maven-plugin</artifactId>
-      <version>0.4.3</version>
-      <configuration>
-        <imageName>kune/phoenix</imageName>
-        <baseImage>kune/java8</baseImage>
-        <entryPoint>["java", "-jar", "/${project.build.finalName}-war-exec.jar"]</entryPoint>
-        <!-- copy the service's jar file from target into the root directory of the image -->
-        <resources>
-           <resource>
-             <targetPath>/</targetPath>
-             <directory>${project.build.directory}</directory>
-             <include>${project.build.finalName}-war-exec.jar</include>
-           </resource>
-        </resources>
-      </configuration>
-    </plugin>
+      <plugin>
+        <groupId>com.spotify</groupId>
+        <artifactId>docker-maven-plugin</artifactId>
+        <version>0.4.3</version>
+        <configuration>
+          <imageName>kune/phoenix</imageName>
+          <baseImage>kune/java8</baseImage>
+          <entryPoint>["java", "-jar",
+            "/${project.build.finalName}-war-exec.jar"]</entryPoint>
+          <!-- copy the service's jar file from target into the root directory 
+            of the image -->
+          <resources>
+            <resource>
+              <targetPath>/</targetPath>
+              <directory>${project.build.directory}</directory>
+              <include>${project.build.finalName}-war-exec.jar</include>
+            </resource>
+          </resources>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 </project>
