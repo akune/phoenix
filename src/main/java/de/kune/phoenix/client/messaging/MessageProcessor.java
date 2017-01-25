@@ -6,11 +6,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Predicate;
 
 import com.google.gwt.user.client.Timer;
 
 import de.kune.phoenix.client.functional.MessageHandler;
-import de.kune.phoenix.client.functional.Predicate;
 import de.kune.phoenix.shared.Message;
 import de.kune.phoenix.shared.Messages;
 

@@ -1,7 +1,6 @@
 package de.kune.phoenix.client.messaging;
 
 import static de.kune.phoenix.client.crypto.AsymmetricCipher.Factory.createPublicKey;
-import static de.kune.phoenix.client.functional.Predicate.always;
 import static de.kune.phoenix.shared.Messages.isIntroduction;
 import static de.kune.phoenix.shared.Messages.isSelfSignedPublicKey;
 import static de.kune.phoenix.shared.Messages.wasSentBy;
@@ -9,11 +8,11 @@ import static de.kune.phoenix.shared.Messages.wasSentBy;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import de.kune.phoenix.client.crypto.KeyPair;
 import de.kune.phoenix.client.crypto.PublicKey;
 import de.kune.phoenix.client.functional.ConversationInitiationHandler;
-import de.kune.phoenix.client.functional.Predicate;
 import de.kune.phoenix.client.messaging.MessageService.ConnectionStateChangeHandler;
 import de.kune.phoenix.shared.Identifiable;
 import de.kune.phoenix.shared.Message;
@@ -67,7 +66,7 @@ public class ClientSession {
 		sharedPublicKeys.put(keyPair.getPublicKey().getId(), keyPair.getPublicKey());
 		recipientId = keyPair.getPublicKey().getId();
 		messageProcessor.addMessageHandler(isSelfSignedPublicKey(), this::handlePublicKeyMessage);
-		messageProcessor.addMessageHandler(always(), this::validateSignature);
+		messageProcessor.addMessageHandler(m->true, this::validateSignature);
 		messageProcessor.addMessageHandler(isIntroductionToNewConversation(),
 				this::handleIntroductionToNewConversation);
 		messageService.addConnectionStateChangeHandler(connectionStateChangeHandler);

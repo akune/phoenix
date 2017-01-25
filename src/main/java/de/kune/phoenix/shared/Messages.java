@@ -6,14 +6,14 @@ import static de.kune.phoenix.shared.util.ArrayUtils.contains;
 import java.io.UnsupportedEncodingException;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import com.google.gwt.core.shared.GWT;
 
 import de.kune.phoenix.client.crypto.KeyPair;
 import de.kune.phoenix.client.crypto.PublicKey;
 import de.kune.phoenix.client.crypto.SecretKey;
-import de.kune.phoenix.client.functional.Predicate;
-import de.kune.phoenix.client.functional.Supplier;
 
 /**
  * Provides various methods to create messages and message predicates. 

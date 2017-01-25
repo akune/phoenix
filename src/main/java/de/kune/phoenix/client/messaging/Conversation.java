@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.user.client.Timer;
@@ -32,7 +33,6 @@ import de.kune.phoenix.client.crypto.SecretKey;
 import de.kune.phoenix.client.crypto.SecretKey.KeyStrength;
 import de.kune.phoenix.client.crypto.SymmetricCipher;
 import de.kune.phoenix.client.functional.MessageHandler;
-import de.kune.phoenix.client.functional.Predicate;
 import de.kune.phoenix.client.messaging.KeyStore.DeprecatingSecretKeyStore;
 import de.kune.phoenix.shared.Message;
 import de.kune.phoenix.shared.Message.Type;
