@@ -22,6 +22,10 @@ public class MessageService {
 		void handleConnectionStateChange(MessageService service);
 	}
 
+	public static interface ServerIdentifierChangeHandler {
+		void handleServerIdentifierChange(String oldServerIdentifier, String newServerIdenfier, MessageService service);
+	}
+
 	private static final MessageService instance = new MessageService();
 	private static final int pollInterval = 250;
 
@@ -46,10 +50,18 @@ public class MessageService {
 						connectionFailureCount = 0;
 						invokeConnectionStateChangeHandlers();
 					}
-					GWT.log("received messages " + response);
-					updateLastReceivedSequenceKey(response);
-					MessageProcessor.instance().process(response);
-					pollingRestReceiverTimer.schedule(pollInterval);
+					String receivedServerIdentifier = method.getResponse().getHeader("X-Server-Identifier");
+					GWT.log("X-Server-Identifier: " + receivedServerIdentifier);
+                    if (serverIdentifier == null || serverIdentifier.equals(receivedServerIdentifier)) {
+                        serverIdentifier = receivedServerIdentifier;
+						GWT.log("received messages " + response);
+						updateLastReceivedSequenceKey(response);
+						MessageProcessor.instance().process(response);
+						pollingRestReceiverTimer.schedule(pollInterval);
+                    } else {
+                    	GWT.log("server identifier changed, no more messages will be received or processed");
+                        invokeServerIdentifierChangeHandlers(serverIdentifier, receivedServerIdentifier);
+                    }
 				}
 
 				@Override
@@ -82,7 +94,9 @@ public class MessageService {
 	};
 
 	private boolean connected;
+	private String serverIdentifier;
 	private List<ConnectionStateChangeHandler> connectionStateChangeHandlers = new ArrayList<>();
+	private List<ServerIdentifierChangeHandler> serverIdentifierChangeHandlers = new ArrayList<>();
 	private String recipientId;
 	private List<Message> outgoingMessageQueue = new ArrayList<>();
 
@@ -98,6 +112,17 @@ public class MessageService {
 		for (ConnectionStateChangeHandler h : connectionStateChangeHandlers) {
 			h.handleConnectionStateChange(this);
 		}
+	}
+
+	private void invokeServerIdentifierChangeHandlers(String oldServerIdentifier, String newServerIdentifier) {
+		GWT.log("invoking server identifier change handlers");
+		for (ServerIdentifierChangeHandler h : serverIdentifierChangeHandlers) {
+			h.handleServerIdentifierChange(oldServerIdentifier, newServerIdentifier, this);
+		}
+	}
+
+	public void addServerIdentifierChangeHandler(ServerIdentifierChangeHandler serverIdentifierChangeHandler) {
+		serverIdentifierChangeHandlers.add(serverIdentifierChangeHandler);
 	}
 
 	public void addConnectionStateChangeHandler(ConnectionStateChangeHandler h) {

@@ -14,6 +14,7 @@ import de.kune.phoenix.client.crypto.KeyPair;
 import de.kune.phoenix.client.crypto.PublicKey;
 import de.kune.phoenix.client.functional.ConversationInitiationHandler;
 import de.kune.phoenix.client.messaging.MessageService.ConnectionStateChangeHandler;
+import de.kune.phoenix.client.messaging.MessageService.ServerIdentifierChangeHandler;
 import de.kune.phoenix.shared.Identifiable;
 import de.kune.phoenix.shared.Message;
 
@@ -27,6 +28,7 @@ public class ClientSession {
 		private KeyPair keyPair;
 		private ConversationInitiationHandler conversationInitiationHandler;
 		private ConnectionStateChangeHandler connectionStateChangeHandler;
+		private ServerIdentifierChangeHandler serverIdentifierChangeHandler;
 
 		public Builder keyPair(KeyPair keyPair) {
 			this.keyPair = keyPair;
@@ -43,12 +45,18 @@ public class ClientSession {
 			return this;
 		}
 
+		public Builder serverIdentifierChangeHandler(ServerIdentifierChangeHandler serverIdentifierChangeHandler) {
+			this.serverIdentifierChangeHandler = serverIdentifierChangeHandler;
+			return this;
+		}
+
 		public ClientSession build() {
 			ClientSession clientSession = new ClientSession(keyPair, conversationInitiationHandler,
-					connectionStateChangeHandler);
+					connectionStateChangeHandler, serverIdentifierChangeHandler);
 			clientSession.messageService.start(clientSession.recipientId);
 			return clientSession;
 		}
+
 	}
 
 	private final MessageService messageService = MessageService.instance();
@@ -60,7 +68,7 @@ public class ClientSession {
 	private Map<String, Conversation> conversations = new HashMap<>();
 
 	private ClientSession(KeyPair keyPair, ConversationInitiationHandler conversationInitiationHandler,
-			ConnectionStateChangeHandler connectionStateChangeHandler) {
+						  ConnectionStateChangeHandler connectionStateChangeHandler, ServerIdentifierChangeHandler serverIdentifierChangeHandler) {
 		this.keyPair = keyPair;
 		this.conversationInitiationHandler = conversationInitiationHandler;
 		sharedPublicKeys.put(keyPair.getPublicKey().getId(), keyPair.getPublicKey());
@@ -70,6 +78,7 @@ public class ClientSession {
 		messageProcessor.addMessageHandler(isIntroductionToNewConversation(),
 				this::handleIntroductionToNewConversation);
 		messageService.addConnectionStateChangeHandler(connectionStateChangeHandler);
+		messageService.addServerIdentifierChangeHandler(serverIdentifierChangeHandler);
 	}
 
 	private Predicate<Message> isIntroductionToNewConversation() {

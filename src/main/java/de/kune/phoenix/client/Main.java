@@ -33,6 +33,11 @@ public class Main implements EntryPoint {
 		chatClientWidget().setConnectionState(s.isConnected());
 	}
 
+	private void handleServerIdentifierChange(String oldIdentifier, String newIdentifier, MessageService s) {
+		GWT.log("Server identifier change: old=" + oldIdentifier + ", new=" + newIdentifier);
+		chatClientWidget().invalidate();
+	}
+
 	private void handleNewConversation(Conversation.Builder builder) {
 		GWT.log("handle new conversation");
 		chatClientWidget.addConversation(builder.getConversationId(),
@@ -78,7 +83,9 @@ public class Main implements EntryPoint {
 					public void onSuccess(KeyPair keyPair) {
 						clientSession = ClientSession.builder().keyPair(keyPair)
 								.conversationInitiationHandler(Main.this::handleNewConversation)
-								.connectionStateChangeHander(Main.this::handleConnectionStateChange).build();
+								.connectionStateChangeHander(Main.this::handleConnectionStateChange)
+								.serverIdentifierChangeHandler(Main.this::handleServerIdentifierChange)
+								.build();
 						chatClientWidget.setKeyPair(keyPair);
 						chatClientWidget.setSearchHandler(s -> performSearch(s));
 						chatClientWidget.setSendMessageHandler(

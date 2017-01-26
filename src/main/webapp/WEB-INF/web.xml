@@ -34,6 +34,16 @@
     <servlet-class>de.kune.phoenix.server.EventSourceServlet</servlet-class>
   </servlet>
 
+  <filter>
+    <filter-name>ResponseHeaderUuidFilter</filter-name>
+    <filter-class>de.kune.phoenix.server.ResponseHeaderUuidFilter</filter-class>
+  </filter>
+
+  <filter-mapping>
+    <filter-name>ResponseHeaderUuidFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
   <servlet-mapping>
     <servlet-name>RestApplication</servlet-name>
     <url-pattern>/api/*</url-pattern>
