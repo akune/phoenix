@@ -21,7 +21,7 @@ import de.kune.phoenix.client.functional.SendMessageHandler;
 import de.kune.phoenix.shared.Message;
 
 public class ChatClientWidget extends Composite {
-    interface ChatClientUiBinder extends UiBinder<Widget, ChatClientWidget> {
+	interface ChatClientUiBinder extends UiBinder<Widget, ChatClientWidget> {
 	}
 
 	private static ChatClientUiBinder uiBinder = GWT.create(ChatClientUiBinder.class);
@@ -257,6 +257,10 @@ public class ChatClientWidget extends Composite {
 		if (conversationWidget != null) {
 			conversationWidget.addReceiveConfirmation(messageId, confirmationMessage);
 		}
+	}
+
+	public void setScreenName(String screenName) {
+		preferencesPanel.screenNameEditTextBox.setText(screenName);
 	}
 
 }

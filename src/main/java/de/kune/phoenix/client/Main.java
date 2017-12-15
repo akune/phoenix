@@ -81,11 +81,14 @@ public class Main implements EntryPoint {
 
 					@Override
 					public void onSuccess(KeyPair keyPair) {
+						String screenName = getScreenNameFromLocalStorage();
 						clientSession = ClientSession.builder().keyPair(keyPair)
+								.screenName(screenName)
 								.conversationInitiationHandler(Main.this::handleNewConversation)
 								.connectionStateChangeHander(Main.this::handleConnectionStateChange)
 								.serverIdentifierChangeHandler(Main.this::handleServerIdentifierChange)
 								.build();
+						chatClientWidget.setScreenName(screenName);
 						chatClientWidget.setKeyPair(keyPair);
 						chatClientWidget.setSearchHandler(s -> performSearch(s));
 						chatClientWidget.setSendMessageHandler(
@@ -163,6 +166,16 @@ public class Main implements EntryPoint {
 		}
 		storage.setItem(STORAGE_PREFIX + "#private-key", result.getPrivateKey().getEncodedKey());
 		storage.setItem(STORAGE_PREFIX + "#public-key", result.getPublicKey().getEncodedKey());
+	}
+
+	private String getScreenNameFromLocalStorage() {
+		Storage storage = Storage.getLocalStorageIfSupported();
+		GWT.log("storage supported: " + (storage != null));
+		if (storage == null) {
+			return null;
+		}
+		String screenName = storage.getItem(STORAGE_PREFIX + "#screen-name");
+		return screenName;
 	}
 
 	private KeyPair getKeyPairFromLocalStorage() {

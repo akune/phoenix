@@ -183,7 +183,7 @@ public class MessageService {
 	}
 
 	/**
-	 * Sends messages. Will retry {@link retryCount} times after failure.
+	 * Sends messages. Will retry {@code retryCount} times after failure.
 	 * 
 	 * @param messages
 	 *            the messages

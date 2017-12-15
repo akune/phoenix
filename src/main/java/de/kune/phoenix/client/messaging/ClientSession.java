@@ -13,9 +13,11 @@ import java.util.function.Predicate;
 import de.kune.phoenix.client.crypto.KeyPair;
 import de.kune.phoenix.client.crypto.PublicKey;
 import de.kune.phoenix.client.functional.ConversationInitiationHandler;
+import de.kune.phoenix.client.functional.FailureHandler;
 import de.kune.phoenix.client.messaging.MessageService.ConnectionStateChangeHandler;
 import de.kune.phoenix.client.messaging.MessageService.ServerIdentifierChangeHandler;
 import de.kune.phoenix.shared.Identifiable;
+import de.kune.phoenix.shared.Identity;
 import de.kune.phoenix.shared.Message;
 
 public class ClientSession {
@@ -29,6 +31,7 @@ public class ClientSession {
 		private ConversationInitiationHandler conversationInitiationHandler;
 		private ConnectionStateChangeHandler connectionStateChangeHandler;
 		private ServerIdentifierChangeHandler serverIdentifierChangeHandler;
+		private Identity identityFromLocalStorage;
 
 		public Builder keyPair(KeyPair keyPair) {
 			this.keyPair = keyPair;
@@ -50,8 +53,13 @@ public class ClientSession {
 			return this;
 		}
 
+		public Builder identityFromLocalStorage(Identity identity) {
+			this.identityFromLocalStorage = identity;
+			return this;
+		}
+
 		public ClientSession build() {
-			ClientSession clientSession = new ClientSession(keyPair, conversationInitiationHandler,
+			ClientSession clientSession = new ClientSession(keyPair, identityFromLocalStorage, conversationInitiationHandler,
 					connectionStateChangeHandler, serverIdentifierChangeHandler);
 			clientSession.messageService.start(clientSession.recipientId);
 			return clientSession;
@@ -60,14 +68,16 @@ public class ClientSession {
 	}
 
 	private final MessageService messageService = MessageService.instance();
+	private final IdentityService identityService = IdentityService.instance();
 	private final MessageProcessor messageProcessor = MessageProcessor.instance();
 	private final KeyPair keyPair;
 	private final Map<String, PublicKey> sharedPublicKeys = new HashMap<>();
+	private final Map<String, Identity> sharedIdentities = new HashMap<>();
 	private final ConversationInitiationHandler conversationInitiationHandler;
 	private final String recipientId;
 	private Map<String, Conversation> conversations = new HashMap<>();
 
-	private ClientSession(KeyPair keyPair, ConversationInitiationHandler conversationInitiationHandler,
+	private ClientSession(KeyPair keyPair, Identity identityFromLocalStorage, ConversationInitiationHandler conversationInitiationHandler,
 						  ConnectionStateChangeHandler connectionStateChangeHandler, ServerIdentifierChangeHandler serverIdentifierChangeHandler) {
 		this.keyPair = keyPair;
 		this.conversationInitiationHandler = conversationInitiationHandler;
@@ -79,6 +89,14 @@ public class ClientSession {
 				this::handleIntroductionToNewConversation);
 		messageService.addConnectionStateChangeHandler(connectionStateChangeHandler);
 		messageService.addServerIdentifierChangeHandler(serverIdentifierChangeHandler);
+
+		identityService.receiveIdentity(keyPair.getPublicKey().getId(), identity -> {
+			sharedIdentities.put(identity.getId(), identity);
+			// TODO: Inform UI
+		}, (t, Void)->{
+			identityService.sendIdentity(identityFromLocalStorage);
+			// TODO: Inform UI
+		});
 	}
 
 	private Predicate<Message> isIntroductionToNewConversation() {
