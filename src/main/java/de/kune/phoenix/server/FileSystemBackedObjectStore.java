@@ -101,7 +101,7 @@ public class FileSystemBackedObjectStore<T extends Identifiable<I> & Sequenced<S
 			@Override
 			public boolean accept(File dir, String name) {
 				Matcher m = filenamePattern.matcher(name);
-				return m.matches() && m.group("id").equals(id.toString());
+				return m.matches() && m.group("id").equals(id.toString().replace("/", "_"));
 			}
 		}).length > 0;
 	}
@@ -112,7 +112,7 @@ public class FileSystemBackedObjectStore<T extends Identifiable<I> & Sequenced<S
 		requireNonNull(object.getId());
 		try {
 			OutputStream os = new FileOutputStream(
-					path.resolve(object.getId().toString() + "[" + object.getClass().getName() + "].json").toFile());
+					path.resolve(object.getId().toString().replace("/", "_") + "[" + object.getClass().getName() + "].json").toFile());
 			mapper.writeValue(os, object);
 			os.close();
 		} catch (IOException e) {
